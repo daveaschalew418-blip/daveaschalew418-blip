@@ -1,7 +1,7 @@
-const CACHE_NAME = 'offline-cal-v1';
+const CACHE_NAME = 'offline-cal-v3';
 const ASSETS = [
-  '/index.html',
-  '/manifest.json',
+  'index.html',
+  'manifest.json',
   'https://cdn-icons-png.flaticon.com/512/747/747310.png'
 ];
 
