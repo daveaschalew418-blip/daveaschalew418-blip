@@ -47,7 +47,7 @@
 <body>
 
     <div class="app-container">
-        <button id="enableNotificationsBtn" class="notif-btn">🔔 Tap to Activate Silent Alerts</button>
+        <button id="enableNotificationsBtn" class="notif-btn">🔔 Tap to Activate Calendar Alerts</button>
 
         <div class="card">
             <div class="cal-header">
@@ -114,13 +114,13 @@
                 if (permission === "granted") {
                     enableNotificationsBtn.style.display = "none";
                     navigator.serviceWorker.ready.then(reg => {
-                        reg.showNotification("System Active", { body: "Silent alerts configured successfully.", silent: true });
+                        // FIX: Removed silent: true so it sounds off immediately on test
+                        reg.showNotification("System Active", { body: "Calendar audio alerts configured successfully." });
                     });
                 }
             });
         };
 
-        // Helper to convert 24h string (16:31) to user friendly 12h string (4:31 PM)
         function formatTime12hr(time24) {
             const [hrs, mins] = time24.split(':');
             let h = parseInt(hrs);
@@ -193,7 +193,6 @@
             }
         }
 
-        // Globally accessible delete function
         window.deleteEvent = function(id) {
             events = events.filter(e => e.id !== id);
             localStorage.setItem('local_calendar_events', JSON.stringify(events));
@@ -210,7 +209,8 @@
                 date: selectedDateStr,
                 title: document.getElementById('eventTitle').value,
                 desc: document.getElementById('eventDesc').value,
-                time: document.getElementById('eventTime').value
+                time: document.getElementById('eventTime').value,
+                alerted: false
             });
             localStorage.setItem('local_calendar_events', JSON.stringify(events));
             eventForm.reset();
@@ -224,26 +224,28 @@
 
         setInterval(() => {
             const now = new Date();
-            const todayStr = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
-            const timeStr = `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
 
             events.forEach(ev => {
-                if (ev.date === todayStr && ev.time === timeStr && !ev.alerted) {
-                    if (Notification.permission === "granted") {
-                        navigator.serviceWorker.ready.then(reg => {
-                            reg.showNotification(`⏰ ${ev.title}`, {
-                                body: ev.desc || "Event Starting Now!",
-                                icon: 'https://cdn-icons-png.flaticon.com/512/747/747310.png',
-                                silent: true, 
-                                requireInteraction: true 
+                if (!ev.alerted) {
+                    const eventDateTime = new Date(`${ev.date}T${ev.time}:00`);
+                    
+                    if (now >= eventDateTime) {
+                        if (Notification.permission === "granted") {
+                            navigator.serviceWorker.ready.then(reg => {
+                                // FIX: Completely removed "silent: true" from the parameters
+                                reg.showNotification(`⏰ ${ev.title}`, {
+                                    body: ev.desc || "Event Starting Now!",
+                                    icon: 'https://cdn-icons-png.flaticon.com/512/747/747310.png',
+                                    requireInteraction: true 
+                                });
                             });
-                        });
+                        }
+                        ev.alerted = true;
+                        localStorage.setItem('local_calendar_events', JSON.stringify(events));
                     }
-                    ev.alerted = true;
-                    localStorage.setItem('local_calendar_events', JSON.stringify(events));
                 }
             });
-        }, 15000);
+        }, 10000);
 
         renderCalendar();
     </script>
