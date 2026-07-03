@@ -13,6 +13,7 @@
             --text-muted: #64748b;
             --border: #e2e8f0;
             --today: #e0e7ff;
+            --danger: #ef4444;
         }
         * { box-sizing: border-box; margin: 0; padding: 0; font-family: system-ui, sans-serif; }
         body { background: var(--bg); color: var(--text); padding: 16px; display: flex; justify-content: center; }
@@ -32,10 +33,13 @@
         .modal.active { display: flex; }
         input, textarea, button { width: 100%; padding: 10px; border: 1px solid var(--border); border-radius: 8px; font-size: 1rem; }
         button { background: var(--primary); color: white; font-weight: 600; border: none; cursor: pointer; }
+        .notif-btn { background: #e11d48; margin-bottom: 4px; display: none; text-align: center; }
         .event-list { margin-top: 12px; display: flex; flex-direction: column; gap: 8px; }
-        .event-item { background: var(--bg); padding: 10px; border-radius: 8px; border-left: 4px solid var(--primary); }
-        .event-item h4 { font-size: 0.95rem; }
-        .event-item p { font-size: 0.85rem; color: var(--text-muted); }
+        .event-item { background: var(--bg); padding: 10px; border-radius: 8px; border-left: 4px solid var(--primary); position: relative; }
+        .event-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 4px; padding-right: 24px; }
+        .event-item h4 { font-size: 0.95rem; word-break: break-word; }
+        .event-item p { font-size: 0.85rem; color: var(--text-muted); margin-bottom: 4px; }
+        .del-btn { position: absolute; right: 8px; top: 8px; background: transparent; color: var(--danger); border: none; width: auto; padding: 4px 8px; font-size: 0.9rem; cursor: pointer; font-weight: bold; }
     </style>
     <link rel="manifest" href="manifest.json">
     <meta name="theme-color" content="#4f46e5">
@@ -43,6 +47,8 @@
 <body>
 
     <div class="app-container">
+        <button id="enableNotificationsBtn" class="notif-btn">🔔 Tap to Activate Silent Alerts</button>
+
         <div class="card">
             <div class="cal-header">
                 <button class="nav-btn" id="prevMonth">◀</button>
@@ -72,8 +78,10 @@
         if ('serviceWorker' in navigator) {
             window.addEventListener('load', () => {
                 navigator.serviceWorker.register('sw.js')
-                    .then(reg => console.log('Service Worker Live!'))
-                    .catch(err => console.error('Worker failed', err));
+                    .then(reg => {
+                        console.log('Worker Active');
+                        checkNotificationPermission();
+                    });
             });
         }
 
@@ -88,11 +96,37 @@
         const dayEventsList = document.getElementById('dayEventsList');
         const eventForm = document.getElementById('eventForm');
         const showAddFormBtn = document.getElementById('showAddFormBtn');
+        const enableNotificationsBtn = document.getElementById('enableNotificationsBtn');
 
         const months = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
 
-        if ("Notification" in window && Notification.permission === "default") {
-            Notification.requestPermission();
+        function checkNotificationPermission() {
+            if (!("Notification" in window)) return;
+            if (Notification.permission !== "granted") {
+                enableNotificationsBtn.style.display = "block";
+            } else {
+                enableNotificationsBtn.style.display = "none";
+            }
+        }
+
+        enableNotificationsBtn.onclick = () => {
+            Notification.requestPermission().then(permission => {
+                if (permission === "granted") {
+                    enableNotificationsBtn.style.display = "none";
+                    navigator.serviceWorker.ready.then(reg => {
+                        reg.showNotification("System Active", { body: "Silent alerts configured successfully.", silent: true });
+                    });
+                }
+            });
+        };
+
+        // Helper to convert 24h string (16:31) to user friendly 12h string (4:31 PM)
+        function formatTime12hr(time24) {
+            const [hrs, mins] = time24.split(':');
+            let h = parseInt(hrs);
+            const ampm = h >= 12 ? 'PM' : 'AM';
+            h = h % 12 || 12;
+            return `${h}:${mins} ${ampm}`;
         }
 
         function renderCalendar() {
@@ -148,13 +182,24 @@
             } else {
                 dayEventsList.innerHTML = dayEvents.map(e => `
                     <div class="event-item">
-                        <h4>${e.title}</h4>
+                        <div class="event-header">
+                            <h4>${e.title}</h4>
+                        </div>
                         ${e.desc ? `<p>${e.desc}</p>` : ''}
-                        <strong style="font-size: 0.8rem; color: var(--primary);">⏰ ${e.time}</strong>
+                        <strong style="font-size: 0.8rem; color: var(--primary);">⏰ ${formatTime12hr(e.time)}</strong>
+                        <button class="del-btn" onclick="deleteEvent(${e.id})">✕</button>
                     </div>
                 `).join('');
             }
         }
+
+        // Globally accessible delete function
+        window.deleteEvent = function(id) {
+            events = events.filter(e => e.id !== id);
+            localStorage.setItem('local_calendar_events', JSON.stringify(events));
+            renderCalendar();
+            renderDayEvents();
+        };
 
         showAddFormBtn.onclick = () => eventForm.classList.toggle('active');
 
@@ -185,9 +230,14 @@
             events.forEach(ev => {
                 if (ev.date === todayStr && ev.time === timeStr && !ev.alerted) {
                     if (Notification.permission === "granted") {
-                        new Notification("🚨 Calendar: " + ev.title, { body: ev.desc || "Starting now!" });
-                    } else {
-                        alert("⏰ EVENT NOW: " + ev.title);
+                        navigator.serviceWorker.ready.then(reg => {
+                            reg.showNotification(`⏰ ${ev.title}`, {
+                                body: ev.desc || "Event Starting Now!",
+                                icon: 'https://cdn-icons-png.flaticon.com/512/747/747310.png',
+                                silent: true, 
+                                requireInteraction: true 
+                            });
+                        });
                     }
                     ev.alerted = true;
                     localStorage.setItem('local_calendar_events', JSON.stringify(events));
