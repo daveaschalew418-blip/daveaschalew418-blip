@@ -1,0 +1,202 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Offline Grid Calendar</title>
+    <style>
+        :root {
+            --bg: #f1f5f9;
+            --card: #ffffff;
+            --primary: #4f46e5;
+            --text: #0f172a;
+            --text-muted: #64748b;
+            --border: #e2e8f0;
+            --today: #e0e7ff;
+        }
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: system-ui, sans-serif; }
+        body { background: var(--bg); color: var(--text); padding: 16px; display: flex; justify-content: center; }
+        .app-container { width: 100%; max-width: 500px; display: flex; flex-direction: column; gap: 16px; }
+        .card { background: var(--card); padding: 16px; border-radius: 16px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05); border: 1px solid var(--border); }
+        .cal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; }
+        .cal-header h2 { font-size: 1.25rem; font-weight: 700; }
+        .nav-btn { background: var(--border); border: none; padding: 8px 12px; border-radius: 8px; cursor: pointer; font-weight: bold; }
+        .weekdays-grid, .days-grid { display: grid; grid-template-columns: repeat(7, 1fr); text-align: center; gap: 4px; }
+        .weekdays-grid { font-weight: 600; color: var(--text-muted); font-size: 0.85rem; margin-bottom: 8px; }
+        .day-cell { aspect-ratio: 1; display: flex; flex-direction: column; justify-content: space-between; align-items: center; padding: 6px; border-radius: 8px; border: 1px solid var(--border); font-size: 0.9rem; cursor: pointer; position: relative; }
+        .day-cell:not(.empty):hover { background: var(--bg); }
+        .day-cell.today { background: var(--today); font-weight: bold; border-color: var(--primary); }
+        .day-cell.empty { border: none; cursor: default; }
+        .event-dot { width: 6px; height: 6px; background: var(--primary); border-radius: 50%; position: absolute; bottom: 6px; }
+        .modal { display: none; flex-direction: column; gap: 12px; margin-top: 12px; padding-top: 12px; border-top: 2px dashed var(--border); }
+        .modal.active { display: flex; }
+        input, textarea, button { width: 100%; padding: 10px; border: 1px solid var(--border); border-radius: 8px; font-size: 1rem; }
+        button { background: var(--primary); color: white; font-weight: 600; border: none; cursor: pointer; }
+        .event-list { margin-top: 12px; display: flex; flex-direction: column; gap: 8px; }
+        .event-item { background: var(--bg); padding: 10px; border-radius: 8px; border-left: 4px solid var(--primary); }
+        .event-item h4 { font-size: 0.95rem; }
+        .event-item p { font-size: 0.85rem; color: var(--text-muted); }
+    </style>
+    <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#4f46e5">
+</head>
+<body>
+
+    <div class="app-container">
+        <div class="card">
+            <div class="cal-header">
+                <button class="nav-btn" id="prevMonth">◀</button>
+                <h2 id="monthYearDisplay"></h2>
+                <button class="nav-btn" id="nextMonth">▶</button>
+            </div>
+            <div class="weekdays-grid">
+                <div>Su</div><div>Mo</div><div>Tu</div><div>We</div><div>Th</div><div>Fr</div><div>Sa</div>
+            </div>
+            <div class="days-grid" id="daysContainer"></div>
+        </div>
+
+        <div class="card" id="actionPanel" style="display: none;">
+            <h3 id="selectedDayTitle"></h3>
+            <div class="event-list" id="dayEventsList"></div>
+            <button id="showAddFormBtn" style="margin-top: 8px;">+ Add Event</button>
+            <form id="eventForm" class="modal">
+                <input type="text" id="eventTitle" placeholder="Event Name" required>
+                <textarea id="eventDesc" placeholder="Description" rows="2"></textarea>
+                <input type="time" id="eventTime" required>
+                <button type="submit">Save Event</button>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        // Real Service Worker Registration
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('sw.js')
+                    .then(reg => console.log('Service Worker Live!'))
+                    .catch(err => console.error('Worker failed', err));
+            });
+        }
+
+        let events = JSON.parse(localStorage.getItem('local_calendar_events')) || [];
+        let currentDate = new Date();
+        let selectedDateStr = "";
+
+        const monthYearDisplay = document.getElementById('monthYearDisplay');
+        const daysContainer = document.getElementById('daysContainer');
+        const actionPanel = document.getElementById('actionPanel');
+        const selectedDayTitle = document.getElementById('selectedDayTitle');
+        const dayEventsList = document.getElementById('dayEventsList');
+        const eventForm = document.getElementById('eventForm');
+        const showAddFormBtn = document.getElementById('showAddFormBtn');
+
+        const months = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
+
+        if ("Notification" in window && Notification.permission === "default") {
+            Notification.requestPermission();
+        }
+
+        function renderCalendar() {
+            const year = currentDate.getFullYear();
+            const month = currentDate.getMonth();
+            monthYearDisplay.innerText = `${months[month]} ${year}`;
+            daysContainer.innerHTML = "";
+
+            const firstDayIndex = new Date(year, month, 1).getDay();
+            const totalDays = new Date(year, month + 1, 0).getDate();
+            const today = new Date();
+
+            for (let i = 0; i < firstDayIndex; i++) {
+                const emptyCell = document.createElement('div');
+                emptyCell.classList.add('day-cell', 'empty');
+                daysContainer.appendChild(emptyCell);
+            }
+
+            for (let day = 1; day <= totalDays; day++) {
+                const cell = document.createElement('div');
+                cell.classList.add('day-cell');
+                cell.innerText = day;
+
+                const dateStr = `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+                
+                if (day === today.getDate() && month === today.getMonth() && year === today.getFullYear()) {
+                    cell.classList.add('today');
+                }
+
+                if (events.some(e => e.date === dateStr)) {
+                    const dot = document.createElement('div');
+                    dot.classList.add('event-dot');
+                    cell.appendChild(dot);
+                }
+
+                cell.addEventListener('click', () => selectDate(dateStr, day));
+                daysContainer.appendChild(cell);
+            }
+        }
+
+        function selectDate(dateStr, dayNum) {
+            selectedDateStr = dateStr;
+            actionPanel.style.display = "block";
+            eventForm.classList.remove('active');
+            selectedDayTitle.innerText = `${months[currentDate.getMonth()]} ${dayNum}, ${currentDate.getFullYear()}`;
+            renderDayEvents();
+        }
+
+        function renderDayEvents() {
+            const dayEvents = events.filter(e => e.date === selectedDateStr).sort((a,b) => a.time.localeCompare(b.time));
+            if (dayEvents.length === 0) {
+                dayEventsList.innerHTML = `<p style="color: var(--text-muted); font-size: 0.9rem;">No events scheduled.</p>`;
+            } else {
+                dayEventsList.innerHTML = dayEvents.map(e => `
+                    <div class="event-item">
+                        <h4>${e.title}</h4>
+                        ${e.desc ? `<p>${e.desc}</p>` : ''}
+                        <strong style="font-size: 0.8rem; color: var(--primary);">⏰ ${e.time}</strong>
+                    </div>
+                `).join('');
+            }
+        }
+
+        showAddFormBtn.onclick = () => eventForm.classList.toggle('active');
+
+        eventForm.onsubmit = (e) => {
+            e.preventDefault();
+            events.push({
+                id: Date.now(),
+                date: selectedDateStr,
+                title: document.getElementById('eventTitle').value,
+                desc: document.getElementById('eventDesc').value,
+                time: document.getElementById('eventTime').value
+            });
+            localStorage.setItem('local_calendar_events', JSON.stringify(events));
+            eventForm.reset();
+            eventForm.classList.remove('active');
+            renderCalendar();
+            renderDayEvents();
+        };
+
+        document.getElementById('prevMonth').onclick = () => { currentDate.setMonth(currentDate.getMonth() - 1); renderCalendar(); };
+        document.getElementById('nextMonth').onclick = () => { currentDate.setMonth(currentDate.getMonth() + 1); renderCalendar(); };
+
+        setInterval(() => {
+            const now = new Date();
+            const todayStr = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
+            const timeStr = `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
+
+            events.forEach(ev => {
+                if (ev.date === todayStr && ev.time === timeStr && !ev.alerted) {
+                    if (Notification.permission === "granted") {
+                        new Notification(`🚨 Calendar: ${ev.title}`, { body: ev.desc || "Starting now!" });
+                    } else {
+                        alert(`⏰ EVENT NOW: ${ev.title}`);
+                    }
+                    ev.alerted = true;
+                    localStorage.setItem('local_calendar_events', JSON.stringify(events));
+                }
+            });
+        }, 15000);
+
+        renderCalendar();
+    </script>
+</body>
+</html>
