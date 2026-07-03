@@ -69,7 +69,6 @@
     </div>
 
     <script>
-        // Real Service Worker Registration
         if ('serviceWorker' in navigator) {
             window.addEventListener('load', () => {
                 navigator.serviceWorker.register('sw.js')
@@ -186,9 +185,9 @@
             events.forEach(ev => {
                 if (ev.date === todayStr && ev.time === timeStr && !ev.alerted) {
                     if (Notification.permission === "granted") {
-                        new Notification(`🚨 Calendar: ${ev.title}`, { body: ev.desc || "Starting now!" });
+                        new Notification("🚨 Calendar: " + ev.title, { body: ev.desc || "Starting now!" });
                     } else {
-                        alert(`⏰ EVENT NOW: ${ev.title}`);
+                        alert("⏰ EVENT NOW: " + ev.title);
                     }
                     ev.alerted = true;
                     localStorage.setItem('local_calendar_events', JSON.stringify(events));
