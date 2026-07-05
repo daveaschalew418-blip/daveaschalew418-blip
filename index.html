@@ -2,412 +2,316 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Offline Grid Calendar</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>StudySync Tracker</title>
+    <link rel="manifest" href="manifest.json">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <style>
         :root {
-            --bg: #f1f5f9;
+            --bg: #f8fafc;
             --card: #ffffff;
-            --primary: #4f46e5;
+            --primary: #2563eb;
+            --success: #10b981;
             --text: #0f172a;
             --text-muted: #64748b;
             --border: #e2e8f0;
-            --today: #e0e7ff;
-            --danger: #ef4444;
+            --math: #ef4444;
+            --physics: #f59e0b;
+            --chem: #06b6d4;
+            --bio: #8b5cf6;
         }
         body.dark {
             --bg: #0f172a;
             --card: #1e293b;
-            --primary: #6366f1;
+            --primary: #3b82f6;
             --text: #f8fafc;
             --text-muted: #94a3b8;
             --border: #334155;
-            --today: #312e81;
         }
-        * { box-sizing: border-box; margin: 0; padding: 0; font-family: system-ui, sans-serif; transition: background 0.2s, color 0.2s; }
-        body { background: var(--bg); color: var(--text); padding: 16px; display: flex; justify-content: center; }
-        .app-container { width: 100%; max-width: 500px; display: flex; flex-direction: column; gap: 16px; position: relative; }
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; -webkit-tap-highlight-color: transparent; }
+        body { background: var(--bg); color: var(--text); padding: 12px; display: flex; justify-content: center; min-height: 100vh; }
+        .app-container { width: 100%; max-width: 480px; display: flex; flex-direction: column; gap: 16px; padding-bottom: 40px; }
         
-        /* Top Controls Layout */
-        .top-bar { display: flex; justify-content: space-between; align-items: center; gap: 8px; }
-        .view-controls { display: flex; background: var(--border); padding: 4px; border-radius: 8px; gap: 4px; }
-        .view-btn { background: transparent; border: none; padding: 6px 12px; border-radius: 6px; cursor: pointer; font-weight: 600; color: var(--text-muted); font-size: 0.85rem; width: auto; }
-        .view-btn.active { background: var(--card); color: var(--text); box-shadow: 0 2px 4px rgba(0,0,0,0.05); }
-        .theme-toggle { background: var(--card); border: 1px solid var(--border); width: 40px; height: 40px; border-radius: 8px; cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 1.2rem; }
+        /* Brand Header Layout */
+        .brand-header { display: flex; align-items: center; justify-content: space-between; padding: 4px 0; }
+        .logo-group { display: flex; align-items: center; gap: 10px; }
+        .logo-svg { width: 38px; height: 38px; border-radius: 9px; }
+        .brand-name { font-size: 1.3rem; font-weight: 800; letter-spacing: -0.5px; }
+        .theme-toggle { background: var(--card); border: 1px solid var(--border); width: 38px; height: 38px; border-radius: 10px; cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 1.1rem; }
+        
+        /* Duolingo style homescreen widget banner */
+        .widget-banner { background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%); color: #ffffff; padding: 16px; border-radius: 20px; border: 1px solid rgba(255,255,255,0.1); box-shadow: 0 10px 15px -3px rgba(0,0,0,0.1); display: flex; flex-direction: column; gap: 12px; position: relative; overflow: hidden; }
+        .widget-banner::before { content: ''; position: absolute; top: -50px; right: -50px; width: 130px; height: 130px; background: rgba(37, 99, 235, 0.2); filter: blur(40px); border-radius: 50%; }
+        .widget-row { display: flex; justify-content: space-between; align-items: center; z-index: 1; }
+        .widget-stat { display: flex; flex-direction: column; }
+        .widget-number { font-size: 1.6rem; font-weight: 800; color: #ffffff; line-height: 1.2; }
+        .widget-label { font-size: 0.75rem; color: #94a3b8; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; }
+        
+        .card { background: var(--card); padding: 18px; border-radius: 20px; border: 1px solid var(--border); box-shadow: 0 4px 6px -1px rgba(0,0,0,0.02); }
+        .target-card { border: 2.5px solid var(--primary); text-align: center; display: flex; flex-direction: column; align-items: center; }
+        
+        .badge { display: inline-block; padding: 5px 12px; border-radius: 20px; font-size: 0.75rem; font-weight: 700; color: white; margin-bottom: 10px; text-transform: uppercase; letter-spacing: 0.5px; }
+        .badge.Math { background: var(--math); }
+        .badge.Physics { background: var(--physics); }
+        .badge.Chemistry { background: var(--chem); }
+        .badge.Biology { background: var(--bio); }
 
-        .card { background: var(--card); padding: 16px; border-radius: 16px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05); border: 1px solid var(--border); }
-        .cal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; }
-        .cal-header h2 { font-size: 1.15rem; font-weight: 700; text-align: center; flex-grow: 1; }
-        .nav-btn { background: var(--border); border: none; padding: 8px 12px; border-radius: 8px; cursor: pointer; font-weight: bold; color: var(--text); width: auto; }
+        .unit-title { font-size: 1.25rem; font-weight: 800; margin-bottom: 4px; line-height: 1.3; letter-spacing: -0.3px; }
+        .unit-grade { color: var(--text-muted); font-size: 0.9rem; font-weight: 600; margin-bottom: 16px; }
         
-        .weekdays-grid, .days-grid { display: grid; grid-template-columns: repeat(7, 1fr); text-align: center; gap: 4px; }
-        .weekdays-grid { font-weight: 600; color: var(--text-muted); font-size: 0.85rem; margin-bottom: 8px; }
-        .day-cell { aspect-ratio: 1; display: flex; flex-direction: column; justify-content: space-between; align-items: center; padding: 6px; border-radius: 8px; border: 1px solid var(--border); font-size: 0.9rem; cursor: pointer; position: relative; background: var(--card); }
-        .day-cell:not(.empty):hover { background: var(--bg); }
-        .day-cell.today { background: var(--today); font-weight: bold; border-color: var(--primary); }
-        .day-cell.selected { border: 2px solid var(--primary); }
-        .day-cell.empty { border: none; cursor: default; background: transparent; }
-        .event-dot { width: 6px; height: 6px; background: var(--primary); border-radius: 50%; position: absolute; bottom: 6px; }
+        .action-btn { background: var(--success); color: white; border: none; padding: 14px 24px; border-radius: 14px; font-size: 1rem; font-weight: 700; cursor: pointer; width: 100%; transition: transform 0.1s; box-shadow: 0 4px 12px rgba(16, 185, 129, 0.2); }
+        .action-btn:active { transform: scale(0.98); }
         
-        .modal { display: none; flex-direction: column; gap: 12px; margin-top: 12px; padding-top: 12px; border-top: 2px dashed var(--border); }
-        .modal.active { display: flex; }
-        input, textarea, button { width: 100%; padding: 10px; border: 1px solid var(--border); border-radius: 8px; font-size: 1rem; background: var(--card); color: var(--text); }
-        button { background: var(--primary); color: white; font-weight: 600; border: none; cursor: pointer; }
-        .notif-btn { background: #e11d48; color: white; margin-bottom: 4px; display: none; text-align: center; }
-        
-        .event-list { margin-top: 12px; display: flex; flex-direction: column; gap: 8px; }
-        .event-item { background: var(--bg); padding: 10px; border-radius: 8px; border-left: 4px solid var(--primary); position: relative; }
-        .event-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 4px; padding-right: 24px; }
-        .event-item h4 { font-size: 0.95rem; word-break: break-word; }
-        .event-item p { font-size: 0.85rem; color: var(--text-muted); margin-bottom: 4px; }
-        .del-btn { position: absolute; right: 8px; top: 8px; background: transparent; color: var(--danger); border: none; width: auto; padding: 4px 8px; font-size: 0.9rem; cursor: pointer; font-weight: bold; }
+        .list-section { display: flex; flex-direction: column; gap: 8px; }
+        .list-header { font-size: 1rem; font-weight: 700; color: var(--text-muted); padding-left: 4px; margin-top: 6px; display: flex; justify-content: space-between; align-items: center; }
+        .count-tag { font-size: 0.8rem; background: var(--border); color: var(--text); padding: 2px 8px; border-radius: 12px; }
 
-        /* Biometric Auth Screen Protection Wrapper */
-        #authScreen { position: fixed; top:0; left:0; width:100vw; height:100vh; background: var(--bg); display: flex; flex-direction: column; align-items: center; justify-content: center; z-index: 10000; gap: 24px; padding: 24px; text-align: center; }
-        .auth-card { background: var(--card); padding: 32px; border-radius: 24px; border: 1px solid var(--border); max-width: 400px; width: 100%; box-shadow: 0 10px 25px -5px rgba(0,0,0,0.1); }
-        .fingerprint-icon { font-size: 4rem; margin-bottom: 16px; color: var(--primary); animation: pulse 2s infinite; }
-        @keyframes pulse { 0% { opacity: 0.6; } 50% { opacity: 1; } 100% { opacity: 0.6; } }
+        .scroll-container { max-height: 260px; overflow-y: auto; padding-right: 4px; display: flex; flex-direction: column; gap: 8px; }
+        /* Smooth scrolling adjustments for standard mobile skins */
+        .scroll-container::-webkit-scrollbar { width: 4px; }
+        .scroll-container::-webkit-scrollbar-thumb { background: var(--border); border-radius: 4px; }
+
+        .unit-item { background: var(--card); border: 1px solid var(--border); padding: 12px 14px; border-radius: 14px; display: flex; justify-content: space-between; align-items: center; }
+        .unit-item.done { opacity: 0.55; background: rgba(16, 185, 129, 0.03); }
+        .unit-item h4 { font-size: 0.9rem; font-weight: 700; margin-bottom: 2px; line-height: 1.2; }
+        .unit-item p { font-size: 0.75rem; color: var(--text-muted); font-weight: 600; }
+        .check-icon { color: var(--success); font-weight: bold; font-size: 1.1rem; }
+        
+        .progress-bar-container { width: 100%; background: rgba(255,255,255,0.1); height: 8px; border-radius: 4px; overflow: hidden; margin-top: 4px; }
+        .progress-bar { height: 100%; background: var(--success); transition: width 0.4s ease; width: 0%; }
     </style>
-    <link rel="manifest" href="manifest.json">
-    <meta name="theme-color" content="#4f46e5">
 </head>
 <body>
 
-    <div id="authScreen">
-        <div class="auth-card">
-            <div class="fingerprint-icon">☝️</div>
-            <h2 style="margin-bottom: 8px;">Calendar Locked</h2>
-            <p style="color: var(--text-muted); margin-bottom: 24px; font-size: 0.95rem;">Identity verification required to open database.</p>
-            <button id="loginAuthBtn" onclick="verifyBiometrics()">Scan Fingerprint</button>
-            <button id="setupAuthBtn" onclick="registerBiometrics()" style="display: none; background: #10b981;">Setup Device Authentication</button>
-        </div>
-    </div>
-
     <div class="app-container">
-        <div class="top-bar">
-            <div class="view-controls">
-                <button class="view-btn active" id="monthViewBtn" onclick="setViewMode('month')">Month</button>
-                <button class="view-btn" id="weekViewBtn" onclick="setViewMode('week')">Week</button>
+        <div class="brand-header">
+            <div class="logo-group">
+                <svg class="logo-svg" viewBox="0 0 512 512">
+                    <rect width="512" height="512" rx="120" fill="#1e293b"/>
+                    <path d="M256 110L64 192l192 82 192-82-192-82z" fill="#2563eb"/>
+                    <path d="M120 245v100c0 40 60 70 136 70s136-30 136-70V245l-136 58-136-58z" fill="#3b82f6"/>
+                </svg>
+                <span class="brand-name">StudySync</span>
             </div>
             <button class="theme-toggle" id="themeToggleBtn" onclick="toggleTheme()">🌙</button>
         </div>
 
-        <button id="enableNotificationsBtn" class="notif-btn">🔔 Tap to Activate Calendar Alerts</button>
-
-        <div class="card">
-            <div class="cal-header">
-                <button class="nav-btn" id="prevPeriod">◀</button>
-                <h2 id="calendarTitleDisplay"></h2>
-                <button class="nav-btn" id="nextPeriod">▶</button>
+        <div class="widget-banner">
+            <div class="widget-row">
+                <div class="widget-stat">
+                    <span class="widget-number" id="widgetDays">57</span>
+                    <span class="widget-label">Days Left</span>
+                </div>
+                <div class="widget-stat" style="text-align: right;">
+                    <span class="widget-number" id="widgetCompleted">0/57</span>
+                    <span class="widget-label">Completed</span>
+                </div>
             </div>
-            <div class="weekdays-grid">
-                <div>Su</div><div>Mo</div><div>Tu</div><div>We</div><div>Th</div><div>Fr</div><div>Sa</div>
+            <div>
+                <div class="widget-row" style="margin-bottom: 2px;">
+                    <span class="widget-label" style="color: #ffffff; font-size: 0.7rem;">Course Completion Progress</span>
+                    <span class="widget-label" id="widgetPercent" style="color: var(--success);">0%</span>
+                </div>
+                <div class="progress-bar-container">
+                    <div class="progress-bar" id="progressBar"></div>
+                </div>
             </div>
-            <div class="days-grid" id="daysContainer"></div>
         </div>
 
-        <div class="card" id="actionPanel" style="display: none;">
-            <h3 id="selectedDayTitle"></h3>
-            <div class="event-list" id="dayEventsList"></div>
-            <button id="showAddFormBtn" style="margin-top: 8px;">+ Add Event</button>
-            <form id="eventForm" class="modal">
-                <input type="text" id="eventTitle" placeholder="Event Name" required>
-                <textarea id="eventDesc" placeholder="Description" rows="2"></textarea>
-                <input type="time" id="eventTime" required>
-                <button type="submit">Save Event</button>
-            </form>
+        <div class="card target-card" id="todayTarget"></div>
+
+        <div class="list-section">
+            <h3 class="list-header">Upcoming Plan <span class="count-tag" id="upcomingCount">0</span></h3>
+            <div class="scroll-container" id="upcomingList"></div>
+        </div>
+
+        <div class="list-section">
+            <h3 class="list-header">Completed Lessons <span class="count-tag" id="completedCount" style="background-color:rgba(16,185,129,0.15); color:var(--success);">0</span></h3>
+            <div class="scroll-container" id="completedList"></div>
         </div>
     </div>
 
     <script>
-        // --- SECURE BIOMETRIC LOCAL AUTHENTICATION (WEBAUTHN CLIENT GATE) ---
-        async function checkBiometricsSetup() {
-            if (!window.PublicKeyCredential) {
-                // Device interface failure fallback
-                document.getElementById('authScreen').style.display = 'none';
-                return;
-            }
-            const savedCred = localStorage.getItem('local_calendar_cred_id');
-            if (!savedCred) {
-                document.getElementById('loginAuthBtn').style.display = 'none';
-                document.getElementById('setupAuthBtn').style.display = 'block';
-            } else {
-                verifyBiometrics();
-            }
-        }
-
-        async function registerBiometrics() {
-            try {
-                const challenge = new Uint8Array(32);
-                window.crypto.getRandomValues(challenge);
-                const userId = new Uint8Array(16);
-                window.crypto.getRandomValues(userId);
-
-                const options = {
-                    publicKey: {
-                        challenge: challenge,
-                        rp: { name: "Offline Grid Calendar PWA" },
-                        user: { id: userId, name: "localuser", displayName: "Local Core User" },
-                        pubKeyCredParams: [{ type: "public-key", alg: -7 }, { type: "public-key", alg: -257 }],
-                        authenticatorSelection: { userVerification: "required", authenticatorAttachment: "platform" },
-                        timeout: 60000
-                    }
-                };
-                const credential = await navigator.credentials.create(options);
-                const credIdBase64 = btoa(String.fromCharCode(...new Uint8Array(credential.rawId)));
-                localStorage.setItem('local_calendar_cred_id', credIdBase64);
-                document.getElementById('authScreen').style.display = 'none';
-            } catch (err) {
-                alert("Biometric setup failed or denied: " + err.message);
-            }
-        }
-
-        async function verifyBiometrics() {
-            try {
-                const credIdBase64 = localStorage.getItem('local_calendar_cred_id');
-                const credId = new Uint8Array(atob(credIdBase64).split("").map(c => c.charCodeAt(0)));
-                const challenge = new Uint8Array(32);
-                window.crypto.getRandomValues(challenge);
-
-                const options = {
-                    publicKey: {
-                        challenge: challenge,
-                        allowCredentials: [{ type: 'public-key', id: credId }],
-                        userVerification: "required",
-                        timeout: 60000
-                    }
-                };
-                await navigator.credentials.get(options);
-                document.getElementById('authScreen').style.display = 'none';
-            } catch (err) {
-                console.error("Auth rejection error execution", err);
-            }
-        }
-
-        // Run hardware scan sequence instantly on page lifecycle execution
-        checkBiometricsSetup();
-
-        // --- THEME PROFILE MANAGER ENGINE ---
-        if (localStorage.getItem('theme_profile') === 'dark') {
+        // Setup light/dark mode persistence values
+        if (localStorage.getItem('studysync_theme') === 'dark') {
             document.body.classList.add('dark');
             document.getElementById('themeToggleBtn').innerText = "☀️";
         }
         function toggleTheme() {
             document.body.classList.toggle('dark');
             const isDark = document.body.classList.contains('dark');
-            localStorage.setItem('theme_profile', isDark ? 'dark' : 'light');
+            localStorage.setItem('studysync_theme', isDark ? 'dark' : 'light');
             document.getElementById('themeToggleBtn').innerText = isDark ? "☀️" : "🌙";
         }
 
-        // --- SERVICE WORKER PIPELINE REGISTER ---
-        if ('serviceWorker' in navigator) {
-            window.addEventListener('load', () => {
-                navigator.serviceWorker.register('sw.js').then(reg => checkNotificationPermission());
-            });
-        }
+        // Entire explicit data grid map parsed exactly out of text file values
+        const curriculumData = [
+            // === MATH ===
+            { subject: "Math", grade: 9, title: "Unit 1: Further on Sets" },
+            { subject: "Math", grade: 9, title: "Unit 2: The Number System" },
+            { subject: "Math", grade: 9, title: "Unit 3: Solving Equations" },
+            { subject: "Math", grade: 9, title: "Unit 4: Solving Inequalities" },
+            { subject: "Math", grade: 9, title: "Unit 5: Introduction to Trigonometry" },
+            { subject: "Math", grade: 9, title: "Unit 6: Regular Polygons" },
+            { subject: "Math", grade: 9, title: "Unit 7: Congruency and Similarity" },
+            { subject: "Math", grade: 9, title: "Unit 8: Vectors in Two Dimensions" },
+            { subject: "Math", grade: 9, title: "Unit 9: Statistics and Probability" },
+            { subject: "Math", grade: 10, title: "Unit 1: Relations and Functions" },
+            { subject: "Math", grade: 10, title: "Unit 2: Polynomial Functions" },
+            { subject: "Math", grade: 10, title: "Unit 3: Exponential and Logarithmic Functions" },
+            { subject: "Math", grade: 10, title: "Unit 4: Trigonometric Functions" },
+            { subject: "Math", grade: 10, title: "Unit 5: Circles" },
+            { subject: "Math", grade: 10, title: "Unit 6: Solid Figures" },
+            { subject: "Math", grade: 10, title: "Unit 7: Coordinate Geometry" },
+            { subject: "Math", grade: 11, title: "Unit 1: Relations and Functions" },
+            { subject: "Math", grade: 11, title: "Unit 2: Rational Expressions and Rational Functions" },
+            { subject: "Math", grade: 11, title: "Unit 3: Matrices" },
+            { subject: "Math", grade: 11, title: "Unit 4: Determinants and Their Properties" },
+            { subject: "Math", grade: 11, title: "Unit 5: Vectors" },
+            { subject: "Math", grade: 11, title: "Unit 6: Transformations of the Plane" },
+            { subject: "Math", grade: 11, title: "Unit 7: Statistics" },
+            { subject: "Math", grade: 11, title: "Unit 8: Probability" },
 
-        let events = JSON.parse(localStorage.getItem('local_calendar_events')) || [];
-        let currentDate = new Date();
-        let selectedDateStr = "";
-        let viewMode = "month"; // global layout standard toggle state: 'month' | 'week'
+            // === PHYSICS ===
+            { subject: "Physics", grade: 9, title: "Unit 1: Physics and Human Society" },
+            { subject: "Physics", grade: 9, title: "Unit 2: Physical Quantities" },
+            { subject: "Physics", grade: 9, title: "Unit 3: Motion in a Straight Line" },
+            { subject: "Physics", grade: 9, title: "Unit 4: Force, Work, Energy and Power" },
+            { subject: "Physics", grade: 9, title: "Unit 5: Simple Machines" },
+            { subject: "Physics", grade: 9, title: "Unit 6: Mechanical Oscillation and Sound Wave" },
+            { subject: "Physics", grade: 9, title: "Unit 7: Temperature and Thermometry" },
+            { subject: "Physics", grade: 10, title: "Unit 1: Vector Quantities" },
+            { subject: "Physics", grade: 10, title: "Unit 2: Uniformly Accelerated Motion" },
+            { subject: "Physics", grade: 10, title: "Unit 3: Elasticity and Static Equilibrium of Rigid Body" },
+            { subject: "Physics", grade: 10, title: "Unit 4: Static and Current Electricity" },
+            { subject: "Physics", grade: 10, title: "Unit 5: Magnetism" },
+            { subject: "Physics", grade: 10, title: "Unit 6: Electromagnetic Waves and Geometrical Optics" },
+            { subject: "Physics", grade: 11, title: "Unit 1: Physics and Human Society" },
+            { subject: "Physics", grade: 11, title: "Unit 2: Vectors" },
+            { subject: "Physics", grade: 11, title: "Unit 3: Motion in One and Two Dimensions" },
+            { subject: "Physics", grade: 11, title: "Unit 4: Dynamics" },
+            { subject: "Physics", grade: 11, title: "Unit 5: Heat Conduction and Calorimetry" },
+            { subject: "Physics", grade: 11, title: "Unit 6: Electrostatics and Electric Circuit" },
+            { subject: "Physics", grade: 11, title: "Unit 7: Nuclear Physics" },
 
-        const calendarTitleDisplay = document.getElementById('calendarTitleDisplay');
-        const daysContainer = document.getElementById('daysContainer');
-        const actionPanel = document.getElementById('actionPanel');
-        const selectedDayTitle = document.getElementById('selectedDayTitle');
-        const dayEventsList = document.getElementById('dayEventsList');
-        const eventForm = document.getElementById('eventForm');
-        const showAddFormBtn = document.getElementById('showAddFormBtn');
-        const enableNotificationsBtn = document.getElementById('enableNotificationsBtn');
+            // === CHEMISTRY ===
+            { subject: "Chemistry", grade: 9, title: "Unit 1: Chemistry and Its Importance" },
+            { subject: "Chemistry", grade: 9, title: "Unit 2: Measurements and Scientific Methods" },
+            { subject: "Chemistry", grade: 9, title: "Unit 3: Structure of the Atom" },
+            { subject: "Chemistry", grade: 9, title: "Unit 4: Periodic Classification of Elements" },
+            { subject: "Chemistry", grade: 9, title: "Unit 5: Chemical Bonding" },
+            { subject: "Chemistry", grade: 10, title: "Unit 1: Chemical Reactions and Stoichiometry" },
+            { subject: "Chemistry", grade: 10, title: "Unit 2: Solutions" },
+            { subject: "Chemistry", grade: 10, title: "Unit 3: Important Inorganic Compounds" },
+            { subject: "Chemistry", grade: 10, title: "Unit 4: Energy Changes and Electrochemistry" },
+            { subject: "Chemistry", grade: 10, fill: "unit", title: "Unit 5: Metals and Nonmetals" },
+            { subject: "Chemistry", grade: 10, title: "Unit 6: Hydrocarbons and Their Natural Sources" },
+            { subject: "Chemistry", grade: 11, title: "Unit 1: Atomic Structure and Periodic Properties of the Elements" },
+            { subject: "Chemistry", grade: 11, title: "Unit 2: Chemical Bonding" },
+            { subject: "Chemistry", grade: 11, title: "Unit 3: Physical States of Matter" },
+            { subject: "Chemistry", grade: 11, title: "Unit 4: Chemical Kinetics" },
+            { subject: "Chemistry", grade: 11, title: "Unit 5: Chemical Equilibrium" },
+            { subject: "Chemistry", grade: 11, title: "Unit 6: Some Important Oxygen-Containing Organic Compounds" },
 
-        const months = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
+            // === BIOLOGY ===
+            { subject: "Biology", grade: 9, title: "Unit 1: Introduction to Biology" },
+            { subject: "Biology", grade: 9, title: "Unit 2: Characteristics and Classification of Organisms" },
+            { subject: "Biology", grade: 9, title: "Unit 3: Cells" },
+            { subject: "Biology", grade: 9, title: "Unit 4: Reproduction" },
+            { subject: "Biology", grade: 9, title: "Unit 5: Human Health, Nutrition and Diseases" },
+            { subject: "Biology", grade: 9, title: "Unit 6: Ecology" },
+            { subject: "Biology", grade: 10, title: "Unit 1: Sub-Fields of Biology" },
+            { subject: "Biology", grade: 10, title: "Unit 2: Plants" },
+            { subject: "Biology", grade: 10, title: "Unit 3: Biochemical Molecules" },
+            { subject: "Biology", grade: 10, title: "Unit 4: Cell Division" },
+            { subject: "Biology", grade: 10, title: "Unit 5: Human Biology" },
+            { subject: "Biology", grade: 10, title: "Unit 6: Ecological Interactions" },
+            { subject: "Biology", grade: 11, title: "Unit One: Biology and Technology" },
+            { subject: "Biology", grade: 11, title: "Unit Two: Animals" },
+            { subject: "Biology", grade: 11, title: "Unit Three: Enzymes" },
+            { subject: "Biology", grade: 11, title: "Unit Four: Genetics" },
+            { subject: "Biology", grade: 11, title: "Unit Five: The Human Body Systems" },
+            { subject: "Biology", grade: 11, title: "Unit Six: Population and Natural Resources" }
+        ];
 
-        function checkNotificationPermission() {
-            if (!("Notification" in window)) return;
-            enableNotificationsBtn.style.display = (Notification.permission !== "granted") ? "block" : "none";
-        }
+        let currentIndex = parseInt(localStorage.getItem('studysync_index')) || 0;
 
-        enableNotificationsBtn.onclick = () => {
-            Notification.requestPermission().then(permission => {
-                if (permission === "granted") {
-                    enableNotificationsBtn.style.display = "none";
-                    navigator.serviceWorker.ready.then(reg => {
-                        reg.showNotification("System Active", { body: "Calendar alerts configured successfully." });
-                    });
-                }
-            });
-        };
-
-        function setViewMode(mode) {
-            viewMode = mode;
-            document.getElementById('monthViewBtn').classList.toggle('active', mode === 'month');
-            document.getElementById('weekViewBtn').classList.toggle('active', mode === 'week');
-            renderCalendar();
-        }
-
-        function formatTime12hr(time24) {
-            const [hrs, mins] = time24.split(':');
-            let h = parseInt(hrs);
-            const ampm = h >= 12 ? 'PM' : 'AM';
-            h = h % 12 || 12;
-            return `${h}:${mins} ${ampm}`;
-        }
-
-        // --- CALENDAR GRID INJECTION INTERFACE ENGINE ---
-        function renderCalendar() {
-            daysContainer.innerHTML = "";
-            const year = currentDate.getFullYear();
-            const month = currentDate.getMonth();
-            const today = new Date();
-
-            if (viewMode === "month") {
-                calendarTitleDisplay.innerText = `${months[month]} ${year}`;
-                const firstDayIndex = new Date(year, month, 1).getDay();
-                const totalDays = new Date(year, month + 1, 0).getDate();
-
-                for (let i = 0; i < firstDayIndex; i++) {
-                    const emptyCell = document.createElement('div');
-                    emptyCell.classList.add('day-cell', 'empty');
-                    daysContainer.appendChild(emptyCell);
-                }
-
-                for (let day = 1; day <= totalDays; day++) {
-                    createDayCell(year, month, day, today);
-                }
-            } else {
-                // WEEK INTERFACES CONTEXT ALGORITHM BUILDER
-                const currentDayOfWeek = currentDate.getDay();
-                const startOfWeek = new Date(currentDate);
-                startOfWeek.setDate(currentDate.getDate() - currentDayOfWeek);
-                
-                const endOfWeek = new Date(startOfWeek);
-                endOfWeek.setDate(startOfWeek.getDate() + 6);
-
-                if (startOfWeek.getMonth() === endOfWeek.getMonth()) {
-                    calendarTitleDisplay.innerText = `${months[startOfWeek.getMonth()]} ${startOfWeek.getFullYear()}`;
-                } else {
-                    calendarTitleDisplay.innerText = `${months[startOfWeek.getMonth()]} - ${months[endOfWeek.getMonth()]} ${endOfWeek.getFullYear()}`;
-                }
-
-                for (let i = 0; i < 7; i++) {
-                    const cellDate = new Date(startOfWeek);
-                    cellDate.setDate(startOfWeek.getDate() + i);
-                    createDayCell(cellDate.getFullYear(), cellDate.getMonth(), cellDate.getDate(), today);
-                }
+        function markComplete() {
+            if (currentIndex < curriculumData.length) {
+                currentIndex++;
+                localStorage.setItem('studysync_index', currentIndex);
+                renderApp();
             }
         }
 
-        function createDayCell(year, month, day, today) {
-            const cell = document.createElement('div');
-            cell.classList.add('day-cell');
-            cell.innerText = day;
-
-            const dateStr = `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+        function renderApp() {
+            const targetContainer = document.getElementById('todayTarget');
+            const upcomingList = document.getElementById('upcomingList');
+            const completedList = document.getElementById('completedList');
             
-            if (day === today.getDate() && month === today.getMonth() && year === today.getFullYear()) {
-                cell.classList.add('today');
-            }
-            if (dateStr === selectedDateStr) {
-                cell.classList.add('selected');
-            }
-            if (events.some(e => e.date === dateStr)) {
-                const dot = document.createElement('div');
-                dot.classList.add('event-dot');
-                cell.appendChild(dot);
-            }
+            upcomingList.innerHTML = "";
+            completedList.innerHTML = "";
 
-            cell.addEventListener('click', () => {
-                document.querySelectorAll('.day-cell').forEach(c => c.classList.remove('selected'));
-                cell.classList.add('selected');
-                selectedDateStr = dateStr;
-                actionPanel.style.display = "block";
-                eventForm.classList.remove('active');
-                selectedDayTitle.innerText = `${months[month]} ${day}, ${year}`;
-                renderDayEvents();
-            });
-            daysContainer.appendChild(cell);
-        }
+            // Calculated Metric Computations
+            const total = curriculumData.length;
+            const remainingDays = total - currentIndex;
+            const percent = Math.round((currentIndex / total) * 100);
 
-        function renderDayEvents() {
-            const dayEvents = events.filter(e => e.date === selectedDateStr).sort((a,b) => a.time.localeCompare(b.time));
-            if (dayEvents.length === 0) {
-                dayEventsList.innerHTML = `<p style="color: var(--text-muted); font-size: 0.9rem;">No events scheduled.</p>`;
+            // Update Premium Banner Metric UI counters
+            document.getElementById('widgetDays').innerText = remainingDays;
+            document.getElementById('widgetCompleted').innerText = `${currentIndex}/${total}`;
+            document.getElementById('widgetPercent').innerText = `${percent}%`;
+            document.getElementById('progressBar').style.width = `${percent}%`;
+
+            // Core Daily Processing Logic
+            if (currentIndex >= total) {
+                targetContainer.innerHTML = `
+                    <h2 style="font-size: 2.2rem; margin-bottom: 6px;">👑</h2>
+                    <h2 class="unit-title">All Course Tracks Cleared!</h2>
+                    <p style="color: var(--text-muted); font-size:0.9rem;">You finished all 57 syllabus items smoothly.</p>
+                `;
             } else {
-                dayEventsList.innerHTML = dayEvents.map(e => `
-                    <div class="event-item">
-                        <div class="event-header">
-                            <h4>${e.title}</h4>
-                        </div>
-                        ${e.desc ? `<p>${e.desc}</p>` : ''}
-                        <strong style="font-size: 0.8rem; color: var(--primary);">⏰ ${formatTime12hr(e.time)}</strong>
-                        <button class="del-btn" onclick="deleteEvent(${e.id})">✕</button>
-                    </div>
-                `).join('');
+                const currentUnit = curriculumData[currentIndex];
+                targetContainer.innerHTML = `
+                    <span class="badge ${currentUnit.subject}">${currentUnit.subject}</span>
+                    <h2 class="unit-title">${currentUnit.title}</h2>
+                    <p class="unit-grade">Grade ${currentUnit.grade}</p>
+                    <button class="action-btn" onclick="markComplete()">🎯 Mark Lesson Done</button>
+                `;
             }
-        }
 
-        window.deleteEvent = function(id) {
-            events = events.filter(e => e.id !== id);
-            localStorage.setItem('local_calendar_events', JSON.stringify(events));
-            renderCalendar();
-            renderDayEvents();
-        };
+            // Populate both standard tracking visual list zones dynamically
+            let upCount = 0;
+            let doneCount = 0;
 
-        showAddFormBtn.onclick = () => eventForm.classList.toggle('active');
-
-        eventForm.onsubmit = (e) => {
-            e.preventDefault();
-            events.push({
-                id: Date.now(),
-                date: selectedDateStr,
-                title: document.getElementById('eventTitle').value,
-                desc: document.getElementById('eventDesc').value,
-                time: document.getElementById('eventTime').value,
-                alerted: false
-            });
-            localStorage.setItem('local_calendar_events', JSON.stringify(events));
-            eventForm.reset();
-            eventForm.classList.remove('active');
-            renderCalendar();
-            renderDayEvents();
-        };
-
-        // Navigation adjusts context parameters dynamically depending on whether week/month mode is selected
-        document.getElementById('prevPeriod').onclick = () => {
-            if (viewMode === "month") { currentDate.setMonth(currentDate.getMonth() - 1); }
-            else { currentDate.setDate(currentDate.getDate() - 7); }
-            renderCalendar();
-        };
-        document.getElementById('nextPeriod').onclick = () => {
-            if (viewMode === "month") { currentDate.setMonth(currentDate.getMonth() + 1); }
-            else { currentDate.setDate(currentDate.getDate() + 7); }
-            renderCalendar();
-        };
-
-        // Background system polling sequence for notifications execution engine
-        setInterval(() => {
-            const now = new Date();
-            events.forEach(ev => {
-                if (!ev.alerted) {
-                    const eventDateTime = new Date(`${ev.date}T${ev.time}:00`);
-                    if (now >= eventDateTime) {
-                        if (Notification.permission === "granted") {
-                            navigator.serviceWorker.ready.then(reg => {
-                                reg.showNotification(`⏰ ${ev.title}`, {
-                                    body: ev.desc || "Event Starting Now!",
-                                    icon: 'https://cdn-icons-png.flaticon.com/512/747/747310.png',
-                                    requireInteraction: true 
-                                });
-                            });
-                        }
-                        ev.alerted = true;
-                        localStorage.setItem('local_calendar_events', JSON.stringify(events));
-                    }
+            curriculumData.forEach((unit, index) => {
+                const layout = `
+                    <div class="unit-item ${index < currentIndex ? 'done' : ''}">
+                        <div>
+                            <h4>${unit.title}</h4>
+                            <p>${unit.subject} • Grade ${unit.grade}</p>
+                        </div>
+                        ${index < currentIndex ? '<span class="check-icon">✓</span>' : ''}
+                    </div>
+                `;
+                if (index < currentIndex) {
+                    completedList.insertAdjacentHTML('afterbegin', layout); // Newest finished sits cleanly at top
+                    doneCount++;
+                } else if (index > currentIndex) {
+                    upcomingList.insertAdjacentHTML('beforeend', layout);
+                    upCount++;
                 }
             });
-        }, 10000);
 
-        renderCalendar();
+            document.getElementById('upcomingCount').innerText = upCount;
+            document.getElementById('completedCount').innerText = doneCount;
+
+            if (upCount === 0) upcomingList.innerHTML = "<p style='color: var(--text-muted); font-size: 0.85rem; padding: 4px;'>No remaining upcoming modules.</p>";
+            if (doneCount === 0) completedList.innerHTML = "<p style='color: var(--text-muted); font-size: 0.85rem; padding: 4px;'>Completed lessons will show here.</p>";
+        }
+
+        renderApp();
     </script>
 </body>
 </html>
