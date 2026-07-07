@@ -3,115 +3,208 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>StudySync Tracker</title>
+    <title>LifeSync Tracker</title>
+    
     <link rel="manifest" href="manifest.json">
     <meta name="apple-mobile-web-app-capable" content="yes">
-    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="LifeSync">
+    <meta name="theme-color" content="#0d9488">
+    
+    <link rel="apple-touch-icon" href="https://cdn-icons-png.flaticon.com/512/2693/2693507.png">
+    <link rel="icon" type="image/png" href="https://cdn-icons-png.flaticon.com/512/2693/2693507.png">
+
     <style>
         :root {
-            --bg: #f8fafc;
+            --bg: #f1f5f9;
             --card: #ffffff;
-            --primary: #2563eb;
-            --success: #10b981;
+            --primary: #0d9488;
+            --primary-light: rgba(13, 148, 136, 0.1);
+            --secondary: #4f46e5;
             --text: #0f172a;
             --text-muted: #64748b;
             --border: #e2e8f0;
-            --math: #ef4444;
-            --physics: #f59e0b;
-            --chem: #06b6d4;
-            --bio: #8b5cf6;
+            --danger: #ef4444;
+            --success: #10b981;
         }
         body.dark {
             --bg: #0f172a;
             --card: #1e293b;
-            --primary: #3b82f6;
+            --primary: #14b8a6;
+            --primary-light: rgba(20, 184, 166, 0.15);
+            --secondary: #6366f1;
             --text: #f8fafc;
             --text-muted: #94a3b8;
             --border: #334155;
         }
         * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; -webkit-tap-highlight-color: transparent; }
-        body { background: var(--bg); color: var(--text); padding: 12px; display: flex; justify-content: center; min-height: 100vh; }
-        .app-container { width: 100%; max-width: 480px; display: flex; flex-direction: column; gap: 16px; padding-bottom: 40px; }
+        body { background: var(--bg); color: var(--text); padding: 16px; display: flex; justify-content: center; min-height: 100vh; transition: background 0.3s, color 0.3s; }
         
-        /* Brand Header Layout */
-        .brand-header { display: flex; align-items: center; justify-content: space-between; padding: 4px 0; }
+        /* App Container (Hidden until unlocked) */
+        .app-container { width: 100%; max-width: 480px; display: none; flex-direction: column; gap: 20px; padding-bottom: 80px; position: relative; }
+        .app-container.unlocked { display: flex; }
+        
+        /* Security Lock Screen */
+        .lock-screen { position: fixed; inset: 0; background: var(--bg); z-index: 100000; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 24px; transition: opacity 0.3s; }
+        .lock-screen.hidden { opacity: 0; pointer-events: none; }
+        .lock-logo { width: 80px; height: 80px; border-radius: 20px; margin-bottom: 24px; box-shadow: 0 10px 25px rgba(13, 148, 136, 0.3); }
+        .lock-title { font-size: 1.5rem; font-weight: 800; margin-bottom: 8px; color: var(--text); }
+        .lock-subtitle { font-size: 0.9rem; color: var(--text-muted); margin-bottom: 32px; text-align: center; }
+        
+        .pin-dots { display: flex; gap: 16px; margin-bottom: 32px; }
+        .pin-dot { width: 16px; height: 16px; border-radius: 50%; border: 2px solid var(--primary); transition: all 0.2s; }
+        .pin-dot.filled { background: var(--primary); }
+        .pin-dot.error { border-color: var(--danger); background: var(--danger); animation: shake 0.3s; }
+        
+        .numpad { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; width: 100%; max-width: 300px; }
+        .num-btn { background: var(--card); border: 1px solid var(--border); color: var(--text); font-size: 1.5rem; font-weight: 700; height: 65px; border-radius: 16px; cursor: pointer; display: flex; justify-content: center; align-items: center; box-shadow: 0 4px 6px rgba(0,0,0,0.02); transition: transform 0.1s, background 0.1s; }
+        .num-btn:active { transform: scale(0.95); background: var(--primary-light); }
+        .action-num-btn { font-size: 1rem; color: var(--text-muted); background: transparent; border: none; box-shadow: none; }
+        
+        .bio-btn { background: linear-gradient(135deg, var(--primary), var(--secondary)); color: white; border: none; padding: 16px; border-radius: 16px; font-size: 1.1rem; font-weight: 700; width: 100%; max-width: 300px; margin-top: 24px; cursor: pointer; box-shadow: 0 10px 15px -3px rgba(13, 148, 136, 0.3); display: flex; align-items: center; justify-content: center; gap: 10px; }
+        
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            25% { transform: translateX(-5px); }
+            75% { transform: translateX(5px); }
+        }
+
+        /* Standard App Styles */
+        .brand-header { display: flex; align-items: center; justify-content: space-between; padding-bottom: 8px; border-bottom: 1px solid var(--border); }
         .logo-group { display: flex; align-items: center; gap: 10px; }
-        .logo-svg { width: 38px; height: 38px; border-radius: 9px; }
+        .logo-img { width: 34px; height: 34px; border-radius: 8px; }
         .brand-name { font-size: 1.3rem; font-weight: 800; letter-spacing: -0.5px; }
-        .theme-toggle { background: var(--card); border: 1px solid var(--border); width: 38px; height: 38px; border-radius: 10px; cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 1.1rem; }
-        
-        /* Duolingo style homescreen widget banner */
-        .widget-banner { background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%); color: #ffffff; padding: 16px; border-radius: 20px; border: 1px solid rgba(255,255,255,0.1); box-shadow: 0 10px 15px -3px rgba(0,0,0,0.1); display: flex; flex-direction: column; gap: 12px; position: relative; overflow: hidden; }
-        .widget-banner::before { content: ''; position: absolute; top: -50px; right: -50px; width: 130px; height: 130px; background: rgba(37, 99, 235, 0.2); filter: blur(40px); border-radius: 50%; }
-        .widget-row { display: flex; justify-content: space-between; align-items: center; z-index: 1; }
-        .widget-stat { display: flex; flex-direction: column; }
-        .widget-number { font-size: 1.6rem; font-weight: 800; color: #ffffff; line-height: 1.2; }
-        .widget-label { font-size: 0.75rem; color: #94a3b8; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; }
-        
-        .card { background: var(--card); padding: 18px; border-radius: 20px; border: 1px solid var(--border); box-shadow: 0 4px 6px -1px rgba(0,0,0,0.02); }
-        .target-card { border: 2.5px solid var(--primary); text-align: center; display: flex; flex-direction: column; align-items: center; }
-        
-        .badge { display: inline-block; padding: 5px 12px; border-radius: 20px; font-size: 0.75rem; font-weight: 700; color: white; margin-bottom: 10px; text-transform: uppercase; letter-spacing: 0.5px; }
-        .badge.Math { background: var(--math); }
-        .badge.Physics { background: var(--physics); }
-        .badge.Chemistry { background: var(--chem); }
-        .badge.Biology { background: var(--bio); }
+        .theme-toggle { background: var(--card); border: 1px solid var(--border); width: 36px; height: 36px; border-radius: 10px; cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 1.1rem; }
 
-        .unit-title { font-size: 1.25rem; font-weight: 800; margin-bottom: 4px; line-height: 1.3; letter-spacing: -0.3px; }
-        .unit-grade { color: var(--text-muted); font-size: 0.9rem; font-weight: 600; margin-bottom: 16px; }
-        
-        .action-btn { background: var(--success); color: white; border: none; padding: 14px 24px; border-radius: 14px; font-size: 1rem; font-weight: 700; cursor: pointer; width: 100%; transition: transform 0.1s; box-shadow: 0 4px 12px rgba(16, 185, 129, 0.2); }
-        .action-btn:active { transform: scale(0.98); }
-        
-        .list-section { display: flex; flex-direction: column; gap: 8px; }
-        .list-header { font-size: 1rem; font-weight: 700; color: var(--text-muted); padding-left: 4px; margin-top: 6px; display: flex; justify-content: space-between; align-items: center; }
-        .count-tag { font-size: 0.8rem; background: var(--border); color: var(--text); padding: 2px 8px; border-radius: 12px; }
+        .greeting-card { background: linear-gradient(135deg, var(--primary), var(--secondary)); padding: 20px; border-radius: 20px; color: white; position: relative; overflow: hidden; box-shadow: 0 10px 15px -3px rgba(0,0,0,0.1); }
+        .greeting-time { font-size: 0.85rem; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; opacity: 0.9; }
+        .greeting-text { font-size: 1.6rem; font-weight: 800; margin-top: 4px; line-height: 1.2; }
+        .greeting-sub { font-size: 0.9rem; margin-top: 8px; opacity: 0.9; font-weight: 500; }
 
-        .scroll-container { max-height: 260px; overflow-y: auto; padding-right: 4px; display: flex; flex-direction: column; gap: 8px; }
-        /* Smooth scrolling adjustments for standard mobile skins */
-        .scroll-container::-webkit-scrollbar { width: 4px; }
-        .scroll-container::-webkit-scrollbar-thumb { background: var(--border); border-radius: 4px; }
+        .app-tab { display: none; flex-direction: column; gap: 16px; }
+        .app-tab.active { display: flex; }
 
-        .unit-item { background: var(--card); border: 1px solid var(--border); padding: 12px 14px; border-radius: 14px; display: flex; justify-content: space-between; align-items: center; }
-        .unit-item.done { opacity: 0.55; background: rgba(16, 185, 129, 0.03); }
-        .unit-item h4 { font-size: 0.9rem; font-weight: 700; margin-bottom: 2px; line-height: 1.2; }
-        .unit-item p { font-size: 0.75rem; color: var(--text-muted); font-weight: 600; }
-        .check-icon { color: var(--success); font-weight: bold; font-size: 1.1rem; }
+        .section-title { font-size: 1.1rem; font-weight: 800; color: var(--text); margin-bottom: 8px; display: flex; align-items: center; justify-content: space-between; }
+        .task-list { display: flex; flex-direction: column; gap: 10px; }
         
-        .progress-bar-container { width: 100%; background: rgba(255,255,255,0.1); height: 8px; border-radius: 4px; overflow: hidden; margin-top: 4px; }
+        .task-card { background: var(--card); border: 1px solid var(--border); padding: 16px; border-radius: 16px; display: flex; align-items: center; gap: 14px; cursor: pointer; transition: transform 0.1s, border-color 0.2s; }
+        .task-card:active { transform: scale(0.98); }
+        .task-card.completed { opacity: 0.6; background: var(--bg); text-decoration: line-through; color: var(--text-muted); }
+        
+        .checkbox-circle { width: 26px; height: 26px; border-radius: 50%; border: 2px solid var(--border); display: flex; justify-content: center; align-items: center; font-weight: bold; color: transparent; transition: all 0.2s; flex-shrink: 0; }
+        .task-card.completed .checkbox-circle { background: var(--success); border-color: var(--success); color: white; }
+        
+        .task-info { flex: 1; }
+        .task-title { font-size: 1rem; font-weight: 700; }
+        .task-tag { font-size: 0.7rem; font-weight: 700; padding: 2px 6px; border-radius: 6px; margin-top: 4px; display: inline-block; }
+        .tag-daily { background: var(--primary-light); color: var(--primary); }
+        .tag-event { background: rgba(245, 158, 11, 0.15); color: #d97706; }
+        
+        .stats-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+        .stat-box { background: var(--card); border: 1px solid var(--border); padding: 16px; border-radius: 16px; text-align: center; }
+        .stat-value { font-size: 2rem; font-weight: 800; color: var(--primary); }
+        .stat-label { font-size: 0.8rem; font-weight: 700; color: var(--text-muted); text-transform: uppercase; margin-top: 4px; }
+        
+        .progress-bar-container { width: 100%; background: var(--border); height: 12px; border-radius: 6px; overflow: hidden; margin-top: 8px; }
         .progress-bar { height: 100%; background: var(--success); transition: width 0.4s ease; width: 0%; }
+
+        .form-group { display: flex; flex-direction: column; gap: 12px; background: var(--card); padding: 16px; border-radius: 16px; border: 1px solid var(--border); }
+        .input-field { padding: 12px; border-radius: 10px; border: 1px solid var(--border); background: var(--bg); color: var(--text); font-size: 0.95rem; width: 100%; outline: none; }
+        .input-field:focus { border-color: var(--primary); }
+        .btn { padding: 12px; border-radius: 10px; border: none; font-weight: 700; cursor: pointer; text-align: center; }
+        .btn-primary { background: var(--primary); color: white; }
+        
+        .edit-list-item { display: flex; justify-content: space-between; align-items: center; background: var(--card); border: 1px solid var(--border); padding: 12px; border-radius: 12px; margin-bottom: 8px; }
+        .delete-btn { background: rgba(239, 68, 68, 0.1); color: var(--danger); border: none; padding: 6px 12px; border-radius: 8px; font-weight: bold; cursor: pointer; }
+
+        .bottom-nav { position: fixed; bottom: 0; left: 50%; transform: translateX(-50%); width: 100%; max-width: 480px; height: 64px; background: var(--card); border-top: 1px solid var(--border); display: flex; justify-content: space-around; align-items: center; z-index: 999; }
+        .nav-item { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px; color: var(--text-muted); cursor: pointer; font-size: 0.7rem; font-weight: 700; width: 33.3%; height: 100%; }
+        .nav-item span { font-size: 1.3rem; }
+        .nav-item.active { color: var(--primary); }
     </style>
 </head>
 <body>
 
-    <div class="app-container">
-        <div class="brand-header">
-            <div class="logo-group">
-                <svg class="logo-svg" viewBox="0 0 512 512">
-                    <rect width="512" height="512" rx="120" fill="#1e293b"/>
-                    <path d="M256 110L64 192l192 82 192-82-192-82z" fill="#2563eb"/>
-                    <path d="M120 245v100c0 40 60 70 136 70s136-30 136-70V245l-136 58-136-58z" fill="#3b82f6"/>
-                </svg>
-                <span class="brand-name">StudySync</span>
-            </div>
-            <button class="theme-toggle" id="themeToggleBtn" onclick="toggleTheme()">🌙</button>
+    <div class="lock-screen" id="lockScreen">
+        <img src="https://cdn-icons-png.flaticon.com/512/2693/2693507.png" class="lock-logo" alt="LifeSync">
+        <div class="lock-title">LifeSync Locked</div>
+        <div class="lock-subtitle" id="lockSubtitle">Enter your PIN to access your planner.</div>
+
+        <div class="pin-dots" id="pinDots">
+            <div class="pin-dot"></div>
+            <div class="pin-dot"></div>
+            <div class="pin-dot"></div>
+            <div class="pin-dot"></div>
         </div>
 
-        <div class="widget-banner">
-            <div class="widget-row">
-                <div class="widget-stat">
-                    <span class="widget-number" id="widgetDays">57</span>
-                    <span class="widget-label">Days Left</span>
+        <div class="numpad">
+            <button class="num-btn" onclick="pressPin(1)">1</button>
+            <button class="num-btn" onclick="pressPin(2)">2</button>
+            <button class="num-btn" onclick="pressPin(3)">3</button>
+            <button class="num-btn" onclick="pressPin(4)">4</button>
+            <button class="num-btn" onclick="pressPin(5)">5</button>
+            <button class="num-btn" onclick="pressPin(6)">6</button>
+            <button class="num-btn" onclick="pressPin(7)">7</button>
+            <button class="num-btn" onclick="pressPin(8)">8</button>
+            <button class="num-btn" onclick="pressPin(9)">9</button>
+            <button class="num-btn action-num-btn" onclick="clearPin()">Clear</button>
+            <button class="num-btn" onclick="pressPin(0)">0</button>
+            <button class="num-btn action-num-btn" onclick="deletePin()">Del</button>
+        </div>
+
+        <button class="bio-btn" id="bioBtn" onclick="triggerBiometrics()" style="display: none;">
+            <span style="font-size: 1.5rem;">🖐️</span> Unlock with Fingerprint
+        </button>
+    </div>
+
+    <div class="app-container" id="mainApp">
+        <div class="brand-header">
+            <div class="logo-group">
+                <img src="https://cdn-icons-png.flaticon.com/512/2693/2693507.png" class="logo-img" alt="logo">
+                <span class="brand-name">LifeSync</span>
+            </div>
+            <div style="display: flex; gap: 8px;">
+                <button class="theme-toggle" onclick="lockApp()" style="font-size:0.9rem;">🔒</button>
+                <button class="theme-toggle" id="themeToggleBtn" onclick="toggleTheme()">🌙</button>
+            </div>
+        </div>
+
+        <div id="tab-today" class="app-tab active">
+            <div class="greeting-card">
+                <div class="greeting-time" id="dateDisplay">Monday, Jan 1</div>
+                <div class="greeting-text" id="greetingDisplay">Good Morning!</div>
+                <div class="greeting-sub" id="statusDisplay">You have 0 tasks left today.</div>
+            </div>
+
+            <div>
+                <h3 class="section-title">Up Next</h3>
+                <div class="task-list" id="pendingTasksList"></div>
+            </div>
+
+            <div style="margin-top: 16px;">
+                <h3 class="section-title" style="color: var(--text-muted);">Completed</h3>
+                <div class="task-list" id="completedTasksList"></div>
+            </div>
+        </div>
+
+        <div id="tab-progress" class="app-tab">
+            <h3 class="section-title">Your Consistency</h3>
+            
+            <div class="stats-grid">
+                <div class="stat-box">
+                    <div class="stat-value" id="streakDisplay">0</div>
+                    <div class="stat-label">Day Streak 🔥</div>
                 </div>
-                <div class="widget-stat" style="text-align: right;">
-                    <span class="widget-number" id="widgetCompleted">0/57</span>
-                    <span class="widget-label">Completed</span>
+                <div class="stat-box">
+                    <div class="stat-value" id="totalDoneDisplay">0</div>
+                    <div class="stat-label">Total Tasks Done ✔️</div>
                 </div>
             </div>
-            <div>
-                <div class="widget-row" style="margin-bottom: 2px;">
-                    <span class="widget-label" style="color: #ffffff; font-size: 0.7rem;">Course Completion Progress</span>
-                    <span class="widget-label" id="widgetPercent" style="color: var(--success);">0%</span>
+
+            <div class="card" style="margin-top: 12px;">
+                <h4 style="margin-bottom: 8px;">Today's Completion</h4>
+                <div style="display: flex; justify-content: space-between; font-weight: 700; font-size: 0.9rem;">
+                    <span id="progressRatio">0 / 0 Tasks</span>
+                    <span id="progressPercent" style="color: var(--success);">0%</span>
                 </div>
                 <div class="progress-bar-container">
                     <div class="progress-bar" id="progressBar"></div>
@@ -119,199 +212,448 @@
             </div>
         </div>
 
-        <div class="card target-card" id="todayTarget"></div>
+        <div id="tab-plan" class="app-tab">
+            <div class="form-group">
+                <h3>📌 Daily Must-Dos</h3>
+                <p style="font-size: 0.8rem; color: var(--text-muted);">Things you need to do every single day.</p>
+                <div style="display: flex; gap: 8px;">
+                    <input type="text" id="newHabitInput" class="input-field" placeholder="e.g. Drink Water, Workout...">
+                    <button class="btn btn-primary" onclick="addHabit()">Add</button>
+                </div>
+                <div id="editHabitsList" style="margin-top: 12px;"></div>
+            </div>
 
-        <div class="list-section">
-            <h3 class="list-header">Upcoming Plan <span class="count-tag" id="upcomingCount">0</span></h3>
-            <div class="scroll-container" id="upcomingList"></div>
+            <div class="form-group" style="margin-top: 8px;">
+                <h3>📅 One-Time Events</h3>
+                <p style="font-size: 0.8rem; color: var(--text-muted);">Specific things for specific dates (Birthdays, Meetings).</p>
+                <input type="text" id="newEventTitle" class="input-field" placeholder="Event/Task Title">
+                <input type="date" id="newEventDate" class="input-field">
+                <button class="btn btn-primary" onclick="addEvent()">Schedule Task</button>
+                
+                <h4 style="margin-top: 16px; font-size: 0.9rem;">Upcoming Events:</h4>
+                <div id="editEventsList" style="margin-top: 8px;"></div>
+            </div>
+            
+            <div class="form-group" style="margin-top: 8px; align-items: center; text-align: center;">
+                <h4 style="font-size: 0.9rem;">Security Settings</h4>
+                <button class="btn btn-primary" style="background: var(--text);" onclick="enrollBiometrics()">Register Device Fingerprint / FaceID</button>
+                <p style="font-size: 0.75rem; color: var(--text-muted); margin-top: 4px;">Binds this app to your phone's native security scanner.</p>
+            </div>
         </div>
 
-        <div class="list-section">
-            <h3 class="list-header">Completed Lessons <span class="count-tag" id="completedCount" style="background-color:rgba(16,185,129,0.15); color:var(--success);">0</span></h3>
-            <div class="scroll-container" id="completedList"></div>
-        </div>
+        <nav class="bottom-nav">
+            <div class="nav-item active" id="btn-nav-today" onclick="switchTab('today')">
+                <span>🎯</span>Today
+            </div>
+            <div class="nav-item" id="btn-nav-progress" onclick="switchTab('progress')">
+                <span>📈</span>Progress
+            </div>
+            <div class="nav-item" id="btn-nav-plan" onclick="switchTab('plan')">
+                <span>⚙️</span>Plan
+            </div>
+        </nav>
     </div>
 
     <script>
-        // Setup light/dark mode persistence values
-        if (localStorage.getItem('studysync_theme') === 'dark') {
+        // ================= SECURITY SYSTEM ENGINE =================
+        let currentPinAttempt = "";
+        let isSettingPin = false;
+        let tempSetupPin = "";
+        
+        const savedPin = localStorage.getItem('lifesync_pin');
+        const hasBiometrics = localStorage.getItem('lifesync_bio_credential');
+
+        // Initialize Lock Screen State
+        if (!savedPin) {
+            isSettingPin = true;
+            document.getElementById('lockSubtitle').innerText = "Set a 4-digit PIN to secure your app.";
+        } else {
+            if (hasBiometrics && window.PublicKeyCredential) {
+                document.getElementById('bioBtn').style.display = "flex";
+            }
+        }
+
+        function pressPin(num) {
+            if (currentPinAttempt.length < 4) {
+                currentPinAttempt += num;
+                updatePinDots();
+                
+                if (currentPinAttempt.length === 4) {
+                    setTimeout(verifyPin, 150);
+                }
+            }
+        }
+
+        function deletePin() {
+            if (currentPinAttempt.length > 0) {
+                currentPinAttempt = currentPinAttempt.slice(0, -1);
+                updatePinDots();
+            }
+        }
+
+        function clearPin() {
+            currentPinAttempt = "";
+            updatePinDots();
+        }
+
+        function updatePinDots() {
+            const dots = document.querySelectorAll('.pin-dot');
+            dots.forEach((dot, index) => {
+                dot.classList.remove('error');
+                if (index < currentPinAttempt.length) dot.classList.add('filled');
+                else dot.classList.remove('filled');
+            });
+        }
+
+        function pinError() {
+            const dots = document.querySelectorAll('.pin-dot');
+            dots.forEach(dot => dot.classList.add('error'));
+            setTimeout(clearPin, 400);
+        }
+
+        function verifyPin() {
+            if (isSettingPin) {
+                if (!tempSetupPin) {
+                    tempSetupPin = currentPinAttempt;
+                    document.getElementById('lockSubtitle').innerText = "Confirm your 4-digit PIN.";
+                    clearPin();
+                } else {
+                    if (currentPinAttempt === tempSetupPin) {
+                        localStorage.setItem('lifesync_pin', currentPinAttempt);
+                        unlockApp();
+                    } else {
+                        document.getElementById('lockSubtitle').innerText = "PINs did not match. Try again.";
+                        tempSetupPin = "";
+                        pinError();
+                    }
+                }
+            } else {
+                if (currentPinAttempt === savedPin) {
+                    unlockApp();
+                } else {
+                    pinError();
+                }
+            }
+        }
+
+        function unlockApp() {
+            document.getElementById('lockScreen').style.opacity = "0";
+            setTimeout(() => {
+                document.getElementById('lockScreen').style.display = "none";
+                document.getElementById('mainApp').classList.add('unlocked');
+            }, 300);
+        }
+
+        function lockApp() {
+            clearPin();
+            document.getElementById('lockScreen').style.display = "flex";
+            document.getElementById('mainApp').classList.remove('unlocked');
+            setTimeout(() => {
+                document.getElementById('lockScreen').style.opacity = "1";
+            }, 50);
+        }
+
+        // --- WebAuthn Biometrics Logic ---
+        function generateRandomBuffer(length) {
+            const array = new Uint8Array(length);
+            window.crypto.getRandomValues(array);
+            return array;
+        }
+
+        async function enrollBiometrics() {
+            if (!window.PublicKeyCredential) {
+                alert("Biometrics are not supported on this browser/device.");
+                return;
+            }
+            try {
+                const publicKey = {
+                    challenge: generateRandomBuffer(32),
+                    rp: { name: "LifeSync Tracker" },
+                    user: {
+                        id: generateRandomBuffer(16),
+                        name: "lifesync_user",
+                        displayName: "LifeSync User"
+                    },
+                    pubKeyCredParams: [
+                        { type: "public-key", alg: -7 },
+                        { type: "public-key", alg: -257 }
+                    ],
+                    authenticatorSelection: { userVerification: "required" },
+                    timeout: 60000
+                };
+
+                const credential = await navigator.credentials.create({ publicKey });
+                
+                // Store base64 credential ID for later unlocking
+                const idBase64 = btoa(String.fromCharCode(...new Uint8Array(credential.rawId)));
+                localStorage.setItem('lifesync_bio_credential', idBase64);
+                
+                alert("✅ Fingerprint/FaceID successfully linked to LifeSync!");
+                document.getElementById('bioBtn').style.display = "flex";
+            } catch (err) {
+                console.error(err);
+                alert("Biometric enrollment cancelled or failed.");
+            }
+        }
+
+        async function triggerBiometrics() {
+            const storedCredIdBase64 = localStorage.getItem('lifesync_bio_credential');
+            if (!storedCredIdBase64) return;
+
+            try {
+                const binaryId = Uint8Array.from(atob(storedCredIdBase64), c => c.charCodeAt(0));
+                
+                const publicKey = {
+                    challenge: generateRandomBuffer(32),
+                    allowCredentials: [{
+                        id: binaryId,
+                        type: "public-key"
+                    }],
+                    userVerification: "required",
+                    timeout: 60000
+                };
+
+                const assertion = await navigator.credentials.get({ publicKey });
+                if (assertion) {
+                    unlockApp();
+                }
+            } catch (err) {
+                console.error(err);
+                alert("Biometric verification failed. Please use your PIN.");
+            }
+        }
+
+        // ================= LIFESYNC CORE ENGINE =================
+        let habits = JSON.parse(localStorage.getItem('lifesync_habits')) || [
+            { id: 'h1', title: 'Review Study Notes' },
+            { id: 'h2', title: 'Drink 2L Water' }
+        ];
+        
+        let events = JSON.parse(localStorage.getItem('lifesync_events')) || [];
+        let history = JSON.parse(localStorage.getItem('lifesync_history')) || {};
+
+        function getTodayString() {
+            const today = new Date();
+            return `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
+        }
+
+        const TODAY_STR = getTodayString();
+        if (!history[TODAY_STR]) history[TODAY_STR] = [];
+
+        // Theme Engine
+        if (localStorage.getItem('lifesync_theme') === 'dark') {
             document.body.classList.add('dark');
             document.getElementById('themeToggleBtn').innerText = "☀️";
         }
+
         function toggleTheme() {
             document.body.classList.toggle('dark');
             const isDark = document.body.classList.contains('dark');
-            localStorage.setItem('studysync_theme', isDark ? 'dark' : 'light');
+            localStorage.setItem('lifesync_theme', isDark ? 'dark' : 'light');
             document.getElementById('themeToggleBtn').innerText = isDark ? "☀️" : "🌙";
         }
 
-        // Entire explicit data grid map parsed exactly out of text file values
-        const curriculumData = [
-            // === MATH ===
-            { subject: "Math", grade: 9, title: "Unit 1: Further on Sets" },
-            { subject: "Math", grade: 9, title: "Unit 2: The Number System" },
-            { subject: "Math", grade: 9, title: "Unit 3: Solving Equations" },
-            { subject: "Math", grade: 9, title: "Unit 4: Solving Inequalities" },
-            { subject: "Math", grade: 9, title: "Unit 5: Introduction to Trigonometry" },
-            { subject: "Math", grade: 9, title: "Unit 6: Regular Polygons" },
-            { subject: "Math", grade: 9, title: "Unit 7: Congruency and Similarity" },
-            { subject: "Math", grade: 9, title: "Unit 8: Vectors in Two Dimensions" },
-            { subject: "Math", grade: 9, title: "Unit 9: Statistics and Probability" },
-            { subject: "Math", grade: 10, title: "Unit 1: Relations and Functions" },
-            { subject: "Math", grade: 10, title: "Unit 2: Polynomial Functions" },
-            { subject: "Math", grade: 10, title: "Unit 3: Exponential and Logarithmic Functions" },
-            { subject: "Math", grade: 10, title: "Unit 4: Trigonometric Functions" },
-            { subject: "Math", grade: 10, title: "Unit 5: Circles" },
-            { subject: "Math", grade: 10, title: "Unit 6: Solid Figures" },
-            { subject: "Math", grade: 10, title: "Unit 7: Coordinate Geometry" },
-            { subject: "Math", grade: 11, title: "Unit 1: Relations and Functions" },
-            { subject: "Math", grade: 11, title: "Unit 2: Rational Expressions and Rational Functions" },
-            { subject: "Math", grade: 11, title: "Unit 3: Matrices" },
-            { subject: "Math", grade: 11, title: "Unit 4: Determinants and Their Properties" },
-            { subject: "Math", grade: 11, title: "Unit 5: Vectors" },
-            { subject: "Math", grade: 11, title: "Unit 6: Transformations of the Plane" },
-            { subject: "Math", grade: 11, title: "Unit 7: Statistics" },
-            { subject: "Math", grade: 11, title: "Unit 8: Probability" },
-
-            // === PHYSICS ===
-            { subject: "Physics", grade: 9, title: "Unit 1: Physics and Human Society" },
-            { subject: "Physics", grade: 9, title: "Unit 2: Physical Quantities" },
-            { subject: "Physics", grade: 9, title: "Unit 3: Motion in a Straight Line" },
-            { subject: "Physics", grade: 9, title: "Unit 4: Force, Work, Energy and Power" },
-            { subject: "Physics", grade: 9, title: "Unit 5: Simple Machines" },
-            { subject: "Physics", grade: 9, title: "Unit 6: Mechanical Oscillation and Sound Wave" },
-            { subject: "Physics", grade: 9, title: "Unit 7: Temperature and Thermometry" },
-            { subject: "Physics", grade: 10, title: "Unit 1: Vector Quantities" },
-            { subject: "Physics", grade: 10, title: "Unit 2: Uniformly Accelerated Motion" },
-            { subject: "Physics", grade: 10, title: "Unit 3: Elasticity and Static Equilibrium of Rigid Body" },
-            { subject: "Physics", grade: 10, title: "Unit 4: Static and Current Electricity" },
-            { subject: "Physics", grade: 10, title: "Unit 5: Magnetism" },
-            { subject: "Physics", grade: 10, title: "Unit 6: Electromagnetic Waves and Geometrical Optics" },
-            { subject: "Physics", grade: 11, title: "Unit 1: Physics and Human Society" },
-            { subject: "Physics", grade: 11, title: "Unit 2: Vectors" },
-            { subject: "Physics", grade: 11, title: "Unit 3: Motion in One and Two Dimensions" },
-            { subject: "Physics", grade: 11, title: "Unit 4: Dynamics" },
-            { subject: "Physics", grade: 11, title: "Unit 5: Heat Conduction and Calorimetry" },
-            { subject: "Physics", grade: 11, title: "Unit 6: Electrostatics and Electric Circuit" },
-            { subject: "Physics", grade: 11, title: "Unit 7: Nuclear Physics" },
-
-            // === CHEMISTRY ===
-            { subject: "Chemistry", grade: 9, title: "Unit 1: Chemistry and Its Importance" },
-            { subject: "Chemistry", grade: 9, title: "Unit 2: Measurements and Scientific Methods" },
-            { subject: "Chemistry", grade: 9, title: "Unit 3: Structure of the Atom" },
-            { subject: "Chemistry", grade: 9, title: "Unit 4: Periodic Classification of Elements" },
-            { subject: "Chemistry", grade: 9, title: "Unit 5: Chemical Bonding" },
-            { subject: "Chemistry", grade: 10, title: "Unit 1: Chemical Reactions and Stoichiometry" },
-            { subject: "Chemistry", grade: 10, title: "Unit 2: Solutions" },
-            { subject: "Chemistry", grade: 10, title: "Unit 3: Important Inorganic Compounds" },
-            { subject: "Chemistry", grade: 10, title: "Unit 4: Energy Changes and Electrochemistry" },
-            { subject: "Chemistry", grade: 10, fill: "unit", title: "Unit 5: Metals and Nonmetals" },
-            { subject: "Chemistry", grade: 10, title: "Unit 6: Hydrocarbons and Their Natural Sources" },
-            { subject: "Chemistry", grade: 11, title: "Unit 1: Atomic Structure and Periodic Properties of the Elements" },
-            { subject: "Chemistry", grade: 11, title: "Unit 2: Chemical Bonding" },
-            { subject: "Chemistry", grade: 11, title: "Unit 3: Physical States of Matter" },
-            { subject: "Chemistry", grade: 11, title: "Unit 4: Chemical Kinetics" },
-            { subject: "Chemistry", grade: 11, title: "Unit 5: Chemical Equilibrium" },
-            { subject: "Chemistry", grade: 11, title: "Unit 6: Some Important Oxygen-Containing Organic Compounds" },
-
-            // === BIOLOGY ===
-            { subject: "Biology", grade: 9, title: "Unit 1: Introduction to Biology" },
-            { subject: "Biology", grade: 9, title: "Unit 2: Characteristics and Classification of Organisms" },
-            { subject: "Biology", grade: 9, title: "Unit 3: Cells" },
-            { subject: "Biology", grade: 9, title: "Unit 4: Reproduction" },
-            { subject: "Biology", grade: 9, title: "Unit 5: Human Health, Nutrition and Diseases" },
-            { subject: "Biology", grade: 9, title: "Unit 6: Ecology" },
-            { subject: "Biology", grade: 10, title: "Unit 1: Sub-Fields of Biology" },
-            { subject: "Biology", grade: 10, title: "Unit 2: Plants" },
-            { subject: "Biology", grade: 10, title: "Unit 3: Biochemical Molecules" },
-            { subject: "Biology", grade: 10, title: "Unit 4: Cell Division" },
-            { subject: "Biology", grade: 10, title: "Unit 5: Human Biology" },
-            { subject: "Biology", grade: 10, title: "Unit 6: Ecological Interactions" },
-            { subject: "Biology", grade: 11, title: "Unit One: Biology and Technology" },
-            { subject: "Biology", grade: 11, title: "Unit Two: Animals" },
-            { subject: "Biology", grade: 11, title: "Unit Three: Enzymes" },
-            { subject: "Biology", grade: 11, title: "Unit Four: Genetics" },
-            { subject: "Biology", grade: 11, title: "Unit Five: The Human Body Systems" },
-            { subject: "Biology", grade: 11, title: "Unit Six: Population and Natural Resources" }
-        ];
-
-        let currentIndex = parseInt(localStorage.getItem('studysync_index')) || 0;
-
-        function markComplete() {
-            if (currentIndex < curriculumData.length) {
-                currentIndex++;
-                localStorage.setItem('studysync_index', currentIndex);
-                renderApp();
-            }
+        // Navigation
+        function switchTab(tabName) {
+            document.querySelectorAll('.app-tab').forEach(el => el.classList.remove('active'));
+            document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('active'));
+            
+            document.getElementById(`tab-${tabName}`).classList.add('active');
+            document.getElementById(`btn-nav-${tabName}`).classList.add('active');
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+            
+            if (tabName === 'today') renderAgenda();
+            if (tabName === 'progress') renderStats();
+            if (tabName === 'plan') renderPlanner();
         }
 
-        function renderApp() {
-            const targetContainer = document.getElementById('todayTarget');
-            const upcomingList = document.getElementById('upcomingList');
-            const completedList = document.getElementById('completedList');
-            
-            upcomingList.innerHTML = "";
-            completedList.innerHTML = "";
+        // Agenda (Today)
+        function renderAgenda() {
+            const pendingList = document.getElementById('pendingTasksList');
+            const completedList = document.getElementById('completedTasksList');
+            pendingList.innerHTML = '';
+            completedList.innerHTML = '';
 
-            // Calculated Metric Computations
-            const total = curriculumData.length;
-            const remainingDays = total - currentIndex;
-            const percent = Math.round((currentIndex / total) * 100);
+            let todaysAgenda = [];
+            habits.forEach(h => todaysAgenda.push({ id: h.id, title: h.title, type: 'daily' }));
+            events.forEach(e => { if (e.date === TODAY_STR) todaysAgenda.push({ id: e.id, title: e.title, type: 'event' }); });
 
-            // Update Premium Banner Metric UI counters
-            document.getElementById('widgetDays').innerText = remainingDays;
-            document.getElementById('widgetCompleted').innerText = `${currentIndex}/${total}`;
-            document.getElementById('widgetPercent').innerText = `${percent}%`;
-            document.getElementById('progressBar').style.width = `${percent}%`;
-
-            // Core Daily Processing Logic
-            if (currentIndex >= total) {
-                targetContainer.innerHTML = `
-                    <h2 style="font-size: 2.2rem; margin-bottom: 6px;">👑</h2>
-                    <h2 class="unit-title">All Course Tracks Cleared!</h2>
-                    <p style="color: var(--text-muted); font-size:0.9rem;">You finished all 57 syllabus items smoothly.</p>
-                `;
-            } else {
-                const currentUnit = curriculumData[currentIndex];
-                targetContainer.innerHTML = `
-                    <span class="badge ${currentUnit.subject}">${currentUnit.subject}</span>
-                    <h2 class="unit-title">${currentUnit.title}</h2>
-                    <p class="unit-grade">Grade ${currentUnit.grade}</p>
-                    <button class="action-btn" onclick="markComplete()">🎯 Mark Lesson Done</button>
-                `;
-            }
-
-            // Populate both standard tracking visual list zones dynamically
-            let upCount = 0;
+            let pendingCount = 0;
             let doneCount = 0;
 
-            curriculumData.forEach((unit, index) => {
-                const layout = `
-                    <div class="unit-item ${index < currentIndex ? 'done' : ''}">
-                        <div>
-                            <h4>${unit.title}</h4>
-                            <p>${unit.subject} • Grade ${unit.grade}</p>
+            todaysAgenda.forEach(task => {
+                const isDone = history[TODAY_STR].includes(task.id);
+                const tagClass = task.type === 'daily' ? 'tag-daily' : 'tag-event';
+                const tagText = task.type === 'daily' ? 'DAILY' : 'ONE-TIME';
+
+                const taskHtml = `
+                    <div class="task-card ${isDone ? 'completed' : ''}" onclick="toggleTask('${task.id}')">
+                        <div class="checkbox-circle">${isDone ? '✓' : ''}</div>
+                        <div class="task-info">
+                            <div class="task-title">${task.title}</div>
+                            <span class="task-tag ${tagClass}">${tagText}</span>
                         </div>
-                        ${index < currentIndex ? '<span class="check-icon">✓</span>' : ''}
                     </div>
                 `;
-                if (index < currentIndex) {
-                    completedList.insertAdjacentHTML('afterbegin', layout); // Newest finished sits cleanly at top
+
+                if (isDone) {
+                    completedList.insertAdjacentHTML('beforeend', taskHtml);
                     doneCount++;
-                } else if (index > currentIndex) {
-                    upcomingList.insertAdjacentHTML('beforeend', layout);
-                    upCount++;
+                } else {
+                    pendingList.insertAdjacentHTML('beforeend', taskHtml);
+                    pendingCount++;
                 }
             });
 
-            document.getElementById('upcomingCount').innerText = upCount;
-            document.getElementById('completedCount').innerText = doneCount;
+            if (pendingCount === 0 && todaysAgenda.length > 0) {
+                pendingList.innerHTML = `<div style="text-align:center; padding: 20px; color:var(--success); font-weight:bold;">🎉 All done for today! Great job!</div>`;
+            } else if (todaysAgenda.length === 0) {
+                pendingList.innerHTML = `<div style="text-align:center; padding: 20px; color:var(--text-muted);">No tasks setup. Go to Plan to add some!</div>`;
+            }
 
-            if (upCount === 0) upcomingList.innerHTML = "<p style='color: var(--text-muted); font-size: 0.85rem; padding: 4px;'>No remaining upcoming modules.</p>";
-            if (doneCount === 0) completedList.innerHTML = "<p style='color: var(--text-muted); font-size: 0.85rem; padding: 4px;'>Completed lessons will show here.</p>";
+            if (doneCount === 0) {
+                completedList.innerHTML = `<div style="font-size: 0.85rem; color:var(--text-muted);">Nothing completed yet. Let's get to work!</div>`;
+            }
+
+            const hour = new Date().getHours();
+            let greeting = "Good Evening!";
+            if (hour < 12) greeting = "Good Morning!";
+            else if (hour < 17) greeting = "Good Afternoon!";
+            
+            const options = { weekday: 'long', month: 'short', day: 'numeric' };
+            document.getElementById('dateDisplay').innerText = new Date().toLocaleDateString('en-US', options);
+            document.getElementById('greetingDisplay').innerText = greeting;
+            
+            if (pendingCount === 0 && todaysAgenda.length > 0) {
+                document.getElementById('statusDisplay').innerText = "You crushed it today! Relax.";
+            } else {
+                document.getElementById('statusDisplay').innerText = `You have ${pendingCount} task${pendingCount !== 1 ? 's' : ''} left on your plate.`;
+            }
+            saveData(); 
         }
 
-        renderApp();
+        function toggleTask(id) {
+            const index = history[TODAY_STR].indexOf(id);
+            if (index > -1) history[TODAY_STR].splice(index, 1);
+            else history[TODAY_STR].push(id);
+            
+            saveData();
+            renderAgenda();
+            renderStats(); 
+        }
+
+        // Stats
+        function renderStats() {
+            let totalToday = habits.length;
+            events.forEach(e => { if (e.date === TODAY_STR) totalToday++; });
+            
+            let doneToday = history[TODAY_STR] ? history[TODAY_STR].length : 0;
+            let percent = totalToday === 0 ? 0 : Math.round((doneToday / totalToday) * 100);
+            
+            document.getElementById('progressRatio').innerText = `${doneToday} / ${totalToday} Tasks`;
+            document.getElementById('progressPercent').innerText = `${percent}%`;
+            document.getElementById('progressBar').style.width = `${percent}%`;
+
+            let totalEver = 0;
+            for (let date in history) totalEver += history[date].length;
+            document.getElementById('totalDoneDisplay').innerText = totalEver;
+
+            let currentStreak = 0;
+            let checkDate = new Date();
+            
+            while (true) {
+                let dateStr = `${checkDate.getFullYear()}-${String(checkDate.getMonth() + 1).padStart(2, '0')}-${String(checkDate.getDate()).padStart(2, '0')}`;
+                if (history[dateStr] && history[dateStr].length > 0) {
+                    currentStreak++;
+                    checkDate.setDate(checkDate.getDate() - 1);
+                } else if (dateStr === TODAY_STR && currentStreak === 0) {
+                    checkDate.setDate(checkDate.getDate() - 1);
+                } else {
+                    break;
+                }
+            }
+            document.getElementById('streakDisplay').innerText = currentStreak;
+        }
+
+        // Planner
+        function renderPlanner() {
+            const habitsList = document.getElementById('editHabitsList');
+            habitsList.innerHTML = habits.map(h => `
+                <div class="edit-list-item">
+                    <span style="font-weight: 600;">${h.title}</span>
+                    <button class="delete-btn" onclick="deleteHabit('${h.id}')">Delete</button>
+                </div>
+            `).join('');
+
+            if (habits.length === 0) habitsList.innerHTML = "<p style='color:var(--text-muted); font-size:0.8rem;'>No daily must-dos set.</p>";
+
+            const eventsList = document.getElementById('editEventsList');
+            const futureEvents = events.filter(e => e.date >= TODAY_STR).sort((a, b) => a.date.localeCompare(b.date));
+            
+            eventsList.innerHTML = futureEvents.map(e => `
+                <div class="edit-list-item">
+                    <div>
+                        <div style="font-weight: 600; font-size:0.9rem;">${e.title}</div>
+                        <div style="font-size: 0.75rem; color: var(--primary); font-weight:bold;">📅 ${e.date}</div>
+                    </div>
+                    <button class="delete-btn" onclick="deleteEvent('${e.id}')">Cancel</button>
+                </div>
+            `).join('');
+
+            if (futureEvents.length === 0) eventsList.innerHTML = "<p style='color:var(--text-muted); font-size:0.8rem;'>No upcoming events scheduled.</p>";
+        }
+
+        function addHabit() {
+            const input = document.getElementById('newHabitInput');
+            if (!input.value.trim()) return;
+            habits.push({ id: 'h_' + Date.now(), title: input.value.trim() });
+            input.value = '';
+            saveData();
+            renderPlanner();
+            renderAgenda();
+        }
+
+        function deleteHabit(id) {
+            habits = habits.filter(h => h.id !== id);
+            saveData();
+            renderPlanner();
+            renderAgenda();
+        }
+
+        function addEvent() {
+            const titleInput = document.getElementById('newEventTitle');
+            const dateInput = document.getElementById('newEventDate');
+            if (!titleInput.value.trim() || !dateInput.value) {
+                alert("Please enter both a title and a date.");
+                return;
+            }
+            events.push({ id: 'e_' + Date.now(), title: titleInput.value.trim(), date: dateInput.value });
+            titleInput.value = '';
+            dateInput.value = '';
+            saveData();
+            renderPlanner();
+            renderAgenda();
+        }
+
+        function deleteEvent(id) {
+            events = events.filter(e => e.id !== id);
+            saveData();
+            renderPlanner();
+            renderAgenda();
+        }
+
+        function saveData() {
+            localStorage.setItem('lifesync_habits', JSON.stringify(habits));
+            localStorage.setItem('lifesync_events', JSON.stringify(events));
+            localStorage.setItem('lifesync_history', JSON.stringify(history));
+        }
+
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => navigator.serviceWorker.register('./sw.js'));
+        }
+
+        renderAgenda();
+        renderStats();
     </script>
 </body>
 </html>
