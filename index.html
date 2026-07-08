@@ -39,33 +39,43 @@
         * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; -webkit-tap-highlight-color: transparent; }
         body { background: var(--bg); color: var(--text); padding: 16px; display: flex; justify-content: center; min-height: 100vh; transition: background 0.3s, color 0.3s; }
         
-        /* App Container (Hidden until unlocked) */
+        /* App Container */
         .app-container { width: 100%; max-width: 480px; display: none; flex-direction: column; gap: 20px; padding-bottom: 80px; position: relative; }
         .app-container.unlocked { display: flex; }
         
         /* Security Lock Screen */
         .lock-screen { position: fixed; inset: 0; background: var(--bg); z-index: 100000; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 24px; transition: opacity 0.3s; }
-        .lock-screen.hidden { opacity: 0; pointer-events: none; }
         .lock-logo { width: 80px; height: 80px; border-radius: 20px; margin-bottom: 24px; box-shadow: 0 10px 25px rgba(13, 148, 136, 0.3); }
         .lock-title { font-size: 1.5rem; font-weight: 800; margin-bottom: 8px; color: var(--text); }
-        .lock-subtitle { font-size: 0.9rem; color: var(--text-muted); margin-bottom: 32px; text-align: center; }
+        .lock-subtitle { font-size: 0.9rem; color: var(--text-muted); margin-bottom: 32px; text-align: center; max-width: 280px; }
         
+        /* Lock Views */
+        #bioView, #pinView { display: none; flex-direction: column; align-items: center; width: 100%; }
+        
+        /* Biometrics Layout */
+        .bio-pulse-icon { font-size: 4.5rem; margin-bottom: 24px; cursor: pointer; animation: pulse 2s infinite; }
+        .switch-lock-btn { background: var(--card); border: 1px solid var(--border); padding: 12px 24px; border-radius: 12px; font-weight: 700; font-size: 0.9rem; color: var(--text); cursor: pointer; display: flex; align-items: center; gap: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.02); }
+        
+        /* Numpad Layout */
         .pin-dots { display: flex; gap: 16px; margin-bottom: 32px; }
         .pin-dot { width: 16px; height: 16px; border-radius: 50%; border: 2px solid var(--primary); transition: all 0.2s; }
         .pin-dot.filled { background: var(--primary); }
         .pin-dot.error { border-color: var(--danger); background: var(--danger); animation: shake 0.3s; }
         
         .numpad { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; width: 100%; max-width: 300px; }
-        .num-btn { background: var(--card); border: 1px solid var(--border); color: var(--text); font-size: 1.5rem; font-weight: 700; height: 65px; border-radius: 16px; cursor: pointer; display: flex; justify-content: center; align-items: center; box-shadow: 0 4px 6px rgba(0,0,0,0.02); transition: transform 0.1s, background 0.1s; }
+        .num-btn { background: var(--card); border: 1px solid var(--border); color: var(--text); font-size: 1.5rem; font-weight: 700; height: 65px; border-radius: 16px; cursor: pointer; display: flex; justify-content: center; align-items: center; box-shadow: 0 4px 6px rgba(0,0,0,0.02); transition: transform 0.1s; }
         .num-btn:active { transform: scale(0.95); background: var(--primary-light); }
         .action-num-btn { font-size: 1rem; color: var(--text-muted); background: transparent; border: none; box-shadow: none; }
-        
-        .bio-btn { background: linear-gradient(135deg, var(--primary), var(--secondary)); color: white; border: none; padding: 16px; border-radius: 16px; font-size: 1.1rem; font-weight: 700; width: 100%; max-width: 300px; margin-top: 24px; cursor: pointer; box-shadow: 0 10px 15px -3px rgba(13, 148, 136, 0.3); display: flex; align-items: center; justify-content: center; gap: 10px; }
         
         @keyframes shake {
             0%, 100% { transform: translateX(0); }
             25% { transform: translateX(-5px); }
             75% { transform: translateX(5px); }
+        }
+        @keyframes pulse {
+            0% { transform: scale(1); opacity: 1; }
+            50% { transform: scale(1.08); opacity: 0.8; }
+            100% { transform: scale(1); opacity: 1; }
         }
 
         /* Standard App Styles */
@@ -86,7 +96,7 @@
         .section-title { font-size: 1.1rem; font-weight: 800; color: var(--text); margin-bottom: 8px; display: flex; align-items: center; justify-content: space-between; }
         .task-list { display: flex; flex-direction: column; gap: 10px; }
         
-        .task-card { background: var(--card); border: 1px solid var(--border); padding: 16px; border-radius: 16px; display: flex; align-items: center; gap: 14px; cursor: pointer; transition: transform 0.1s, border-color 0.2s; }
+        .task-card { background: var(--card); border: 1px solid var(--border); padding: 16px; border-radius: 16px; display: flex; align-items: center; gap: 14px; cursor: pointer; transition: transform 0.1s; }
         .task-card:active { transform: scale(0.98); }
         .task-card.completed { opacity: 0.6; background: var(--bg); text-decoration: line-through; color: var(--text-muted); }
         
@@ -95,9 +105,12 @@
         
         .task-info { flex: 1; }
         .task-title { font-size: 1rem; font-weight: 700; }
-        .task-tag { font-size: 0.7rem; font-weight: 700; padding: 2px 6px; border-radius: 6px; margin-top: 4px; display: inline-block; }
+        
+        .task-meta-row { display: flex; align-items: center; gap: 8px; margin-top: 4px; }
+        .task-tag { font-size: 0.7rem; font-weight: 700; padding: 2px 6px; border-radius: 6px; display: inline-block; }
         .tag-daily { background: var(--primary-light); color: var(--primary); }
         .tag-event { background: rgba(245, 158, 11, 0.15); color: #d97706; }
+        .task-time-badge { font-size: 0.75rem; font-weight: 700; color: var(--text-muted); }
         
         .stats-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
         .stat-box { background: var(--card); border: 1px solid var(--border); padding: 16px; border-radius: 16px; text-align: center; }
@@ -108,9 +121,12 @@
         .progress-bar { height: 100%; background: var(--success); transition: width 0.4s ease; width: 0%; }
 
         .form-group { display: flex; flex-direction: column; gap: 12px; background: var(--card); padding: 16px; border-radius: 16px; border: 1px solid var(--border); }
+        .input-row { display: flex; flex-direction: column; gap: 8px; width: 100%; }
+        @media(min-width: 360px) { .input-row { flex-direction: row; } }
+        
         .input-field { padding: 12px; border-radius: 10px; border: 1px solid var(--border); background: var(--bg); color: var(--text); font-size: 0.95rem; width: 100%; outline: none; }
         .input-field:focus { border-color: var(--primary); }
-        .btn { padding: 12px; border-radius: 10px; border: none; font-weight: 700; cursor: pointer; text-align: center; }
+        .btn { padding: 12px 20px; border-radius: 10px; border: none; font-weight: 700; cursor: pointer; text-align: center; white-space: nowrap; }
         .btn-primary { background: var(--primary); color: white; }
         
         .edit-list-item { display: flex; justify-content: space-between; align-items: center; background: var(--card); border: 1px solid var(--border); padding: 12px; border-radius: 12px; margin-bottom: 8px; }
@@ -126,34 +142,39 @@
 
     <div class="lock-screen" id="lockScreen">
         <img src="https://cdn-icons-png.flaticon.com/512/2693/2693507.png" class="lock-logo" alt="LifeSync">
-        <div class="lock-title">LifeSync Locked</div>
-        <div class="lock-subtitle" id="lockSubtitle">Enter your PIN to access your planner.</div>
+        <div class="lock-title">LifeSync</div>
+        <div class="lock-subtitle" id="lockSubtitle">Authenticating...</div>
 
-        <div class="pin-dots" id="pinDots">
-            <div class="pin-dot"></div>
-            <div class="pin-dot"></div>
-            <div class="pin-dot"></div>
-            <div class="pin-dot"></div>
+        <div id="bioView">
+            <div class="bio-pulse-icon" onclick="triggerBiometrics()">🖐️</div>
+            <button class="switch-lock-btn" onclick="showPinPad()">
+                <span>⌨️</span> Use Keypad
+            </button>
         </div>
 
-        <div class="numpad">
-            <button class="num-btn" onclick="pressPin(1)">1</button>
-            <button class="num-btn" onclick="pressPin(2)">2</button>
-            <button class="num-btn" onclick="pressPin(3)">3</button>
-            <button class="num-btn" onclick="pressPin(4)">4</button>
-            <button class="num-btn" onclick="pressPin(5)">5</button>
-            <button class="num-btn" onclick="pressPin(6)">6</button>
-            <button class="num-btn" onclick="pressPin(7)">7</button>
-            <button class="num-btn" onclick="pressPin(8)">8</button>
-            <button class="num-btn" onclick="pressPin(9)">9</button>
-            <button class="num-btn action-num-btn" onclick="clearPin()">Clear</button>
-            <button class="num-btn" onclick="pressPin(0)">0</button>
-            <button class="num-btn action-num-btn" onclick="deletePin()">Del</button>
-        </div>
+        <div id="pinView">
+            <div class="pin-dots" id="pinDots">
+                <div class="pin-dot"></div>
+                <div class="pin-dot"></div>
+                <div class="pin-dot"></div>
+                <div class="pin-dot"></div>
+            </div>
 
-        <button class="bio-btn" id="bioBtn" onclick="triggerBiometrics()" style="display: none;">
-            <span style="font-size: 1.5rem;">🖐️</span> Unlock with Fingerprint
-        </button>
+            <div class="numpad">
+                <button class="num-btn" onclick="pressPin(1)">1</button>
+                <button class="num-btn" onclick="pressPin(2)">2</button>
+                <button class="num-btn" onclick="pressPin(3)">3</button>
+                <button class="num-btn" onclick="pressPin(4)">4</button>
+                <button class="num-btn" onclick="pressPin(5)">5</button>
+                <button class="num-btn" onclick="pressPin(6)">6</button>
+                <button class="num-btn" onclick="pressPin(7)">7</button>
+                <button class="num-btn" onclick="pressPin(8)">8</button>
+                <button class="num-btn" onclick="pressPin(9)">9</button>
+                <button class="num-btn action-num-btn" onclick="clearPin()">Clear</button>
+                <button class="num-btn" onclick="pressPin(0)">0</button>
+                <button class="num-btn action-num-btn" onclick="deletePin()">Del</button>
+            </div>
+        </div>
     </div>
 
     <div class="app-container" id="mainApp">
@@ -216,8 +237,9 @@
             <div class="form-group">
                 <h3>📌 Daily Must-Dos</h3>
                 <p style="font-size: 0.8rem; color: var(--text-muted);">Things you need to do every single day.</p>
-                <div style="display: flex; gap: 8px;">
+                <div class="input-row">
                     <input type="text" id="newHabitInput" class="input-field" placeholder="e.g. Drink Water, Workout...">
+                    <input type="time" id="newHabitTime" class="input-field" style="max-width: 130px;">
                     <button class="btn btn-primary" onclick="addHabit()">Add</button>
                 </div>
                 <div id="editHabitsList" style="margin-top: 12px;"></div>
@@ -227,7 +249,10 @@
                 <h3>📅 One-Time Events</h3>
                 <p style="font-size: 0.8rem; color: var(--text-muted);">Specific things for specific dates (Birthdays, Meetings).</p>
                 <input type="text" id="newEventTitle" class="input-field" placeholder="Event/Task Title">
-                <input type="date" id="newEventDate" class="input-field">
+                <div class="input-row">
+                    <input type="date" id="newEventDate" class="input-field">
+                    <input type="time" id="newEventTime" class="input-field" style="max-width: 130px;">
+                </div>
                 <button class="btn btn-primary" onclick="addEvent()">Schedule Task</button>
                 
                 <h4 style="margin-top: 16px; font-size: 0.9rem;">Upcoming Events:</h4>
@@ -237,7 +262,7 @@
             <div class="form-group" style="margin-top: 8px; align-items: center; text-align: center;">
                 <h4 style="font-size: 0.9rem;">Security Settings</h4>
                 <button class="btn btn-primary" style="background: var(--text);" onclick="enrollBiometrics()">Register Device Fingerprint / FaceID</button>
-                <p style="font-size: 0.75rem; color: var(--text-muted); margin-top: 4px;">Binds this app to your phone's native security scanner.</p>
+                <p style="font-size: 0.75rem; color: var(--text-muted); margin-top: 4px;">Links this web app directly to your system's hardware scanner.</p>
             </div>
         </div>
 
@@ -255,7 +280,7 @@
     </div>
 
     <script>
-        // ================= SECURITY SYSTEM ENGINE =================
+        // ================= SECURITY GATEWAY ENGINE =================
         let currentPinAttempt = "";
         let isSettingPin = false;
         let tempSetupPin = "";
@@ -263,13 +288,33 @@
         const savedPin = localStorage.getItem('lifesync_pin');
         const hasBiometrics = localStorage.getItem('lifesync_bio_credential');
 
-        // Initialize Lock Screen State
-        if (!savedPin) {
-            isSettingPin = true;
-            document.getElementById('lockSubtitle').innerText = "Set a 4-digit PIN to secure your app.";
-        } else {
-            if (hasBiometrics && window.PublicKeyCredential) {
-                document.getElementById('bioBtn').style.display = "flex";
+        // Initializing security architecture flow
+        function initSecurityLifecycle() {
+            if (!savedPin) {
+                // Brand new user setup flow
+                isSettingPin = true;
+                document.getElementById('lockSubtitle').innerText = "Create a master 4-digit PIN to secure your schedule.";
+                showPinPad();
+            } else {
+                if (hasBiometrics && window.PublicKeyCredential) {
+                    // Biometrics exist: Force fingerprint immediately
+                    document.getElementById('lockSubtitle').innerText = "Verify your fingerprint or FaceID to open.";
+                    document.getElementById('bioView').style.display = "flex";
+                    document.getElementById('pinView').style.display = "none";
+                    setTimeout(triggerBiometrics, 350); // Auto-fire scanner natively
+                } else {
+                    // Default fallback if biometrics aren't setup yet
+                    document.getElementById('lockSubtitle').innerText = "Enter your PIN to access your planner.";
+                    showPinPad();
+                }
+            }
+        }
+
+        function showPinPad() {
+            document.getElementById('bioView').style.display = "none";
+            document.getElementById('pinView').style.display = "flex";
+            if (!isSettingPin) {
+                document.getElementById('lockSubtitle').innerText = "Enter your 4-digit security PIN.";
             }
         }
 
@@ -277,24 +322,15 @@
             if (currentPinAttempt.length < 4) {
                 currentPinAttempt += num;
                 updatePinDots();
-                
-                if (currentPinAttempt.length === 4) {
-                    setTimeout(verifyPin, 150);
-                }
+                if (currentPinAttempt.length === 4) setTimeout(verifyPin, 150);
             }
         }
 
         function deletePin() {
-            if (currentPinAttempt.length > 0) {
-                currentPinAttempt = currentPinAttempt.slice(0, -1);
-                updatePinDots();
-            }
+            if (currentPinAttempt.length > 0) { currentPinAttempt = currentPinAttempt.slice(0, -1); updatePinDots(); }
         }
 
-        function clearPin() {
-            currentPinAttempt = "";
-            updatePinDots();
-        }
+        function clearPin() { currentPinAttempt = ""; updatePinDots(); }
 
         function updatePinDots() {
             const dots = document.querySelectorAll('.pin-dot');
@@ -315,24 +351,21 @@
             if (isSettingPin) {
                 if (!tempSetupPin) {
                     tempSetupPin = currentPinAttempt;
-                    document.getElementById('lockSubtitle').innerText = "Confirm your 4-digit PIN.";
+                    document.getElementById('lockSubtitle').innerText = "Confirm your master PIN.";
                     clearPin();
                 } else {
                     if (currentPinAttempt === tempSetupPin) {
                         localStorage.setItem('lifesync_pin', currentPinAttempt);
                         unlockApp();
                     } else {
-                        document.getElementById('lockSubtitle').innerText = "PINs did not match. Try again.";
+                        document.getElementById('lockSubtitle').innerText = "PINs did not match. Resetting setup...";
                         tempSetupPin = "";
                         pinError();
                     }
                 }
             } else {
-                if (currentPinAttempt === savedPin) {
-                    unlockApp();
-                } else {
-                    pinError();
-                }
+                if (currentPinAttempt === savedPin) unlockApp();
+                else pinError();
             }
         }
 
@@ -350,10 +383,10 @@
             document.getElementById('mainApp').classList.remove('unlocked');
             setTimeout(() => {
                 document.getElementById('lockScreen').style.opacity = "1";
+                initSecurityLifecycle();
             }, 50);
         }
 
-        // --- WebAuthn Biometrics Logic ---
         function generateRandomBuffer(length) {
             const array = new Uint8Array(length);
             window.crypto.getRandomValues(array);
@@ -362,71 +395,52 @@
 
         async function enrollBiometrics() {
             if (!window.PublicKeyCredential) {
-                alert("Biometrics are not supported on this browser/device.");
+                alert("Biometrics are not supported on this browser/device environment.");
                 return;
             }
             try {
                 const publicKey = {
                     challenge: generateRandomBuffer(32),
                     rp: { name: "LifeSync Tracker" },
-                    user: {
-                        id: generateRandomBuffer(16),
-                        name: "lifesync_user",
-                        displayName: "LifeSync User"
-                    },
-                    pubKeyCredParams: [
-                        { type: "public-key", alg: -7 },
-                        { type: "public-key", alg: -257 }
-                    ],
+                    user: { id: generateRandomBuffer(16), name: "lifesync_user", displayName: "LifeSync User" },
+                    pubKeyCredParams: [{ type: "public-key", alg: -7 }, { type: "public-key", alg: -257 }],
                     authenticatorSelection: { userVerification: "required" },
                     timeout: 60000
                 };
-
                 const credential = await navigator.credentials.create({ publicKey });
-                
-                // Store base64 credential ID for later unlocking
                 const idBase64 = btoa(String.fromCharCode(...new Uint8Array(credential.rawId)));
                 localStorage.setItem('lifesync_bio_credential', idBase64);
-                
                 alert("✅ Fingerprint/FaceID successfully linked to LifeSync!");
-                document.getElementById('bioBtn').style.display = "flex";
             } catch (err) {
                 console.error(err);
-                alert("Biometric enrollment cancelled or failed.");
+                alert("Biometric enrollment failed or timed out.");
             }
         }
 
         async function triggerBiometrics() {
             const storedCredIdBase64 = localStorage.getItem('lifesync_bio_credential');
             if (!storedCredIdBase64) return;
-
             try {
                 const binaryId = Uint8Array.from(atob(storedCredIdBase64), c => c.charCodeAt(0));
-                
                 const publicKey = {
                     challenge: generateRandomBuffer(32),
-                    allowCredentials: [{
-                        id: binaryId,
-                        type: "public-key"
-                    }],
+                    allowCredentials: [{ id: binaryId, type: "public-key" }],
                     userVerification: "required",
                     timeout: 60000
                 };
-
                 const assertion = await navigator.credentials.get({ publicKey });
-                if (assertion) {
-                    unlockApp();
-                }
+                if (assertion) unlockApp();
             } catch (err) {
-                console.error(err);
-                alert("Biometric verification failed. Please use your PIN.");
+                console.error("Biometric initialization failure:", err);
+                // Graceful fallback to keypad without alerting an ugly pop-up
+                showPinPad();
             }
         }
 
-        // ================= LIFESYNC CORE ENGINE =================
+        // ================= LIFESYNC TIME-SORTED CORE ENGINE =================
         let habits = JSON.parse(localStorage.getItem('lifesync_habits')) || [
-            { id: 'h1', title: 'Review Study Notes' },
-            { id: 'h2', title: 'Drink 2L Water' }
+            { id: 'h1', title: 'Review Study Notes', time: '08:00' },
+            { id: 'h2', title: 'Gym Workout Session', time: '17:30' }
         ];
         
         let events = JSON.parse(localStorage.getItem('lifesync_events')) || [];
@@ -440,7 +454,18 @@
         const TODAY_STR = getTodayString();
         if (!history[TODAY_STR]) history[TODAY_STR] = [];
 
-        // Theme Engine
+        // Time presentation helper (e.g. 14:30 -> 2:30 PM)
+        function formatTime(timeStr) {
+            if (!timeStr) return "Anytime";
+            const [hours, minutes] = timeStr.split(':');
+            let h = parseInt(hours);
+            const ampm = h >= 12 ? 'PM' : 'AM';
+            h = h % 12;
+            h = h ? h : 12;
+            return `${h}:${minutes} ${ampm}`;
+        }
+
+        // Theme Engine Setup
         if (localStorage.getItem('lifesync_theme') === 'dark') {
             document.body.classList.add('dark');
             document.getElementById('themeToggleBtn').innerText = "☀️";
@@ -453,7 +478,7 @@
             document.getElementById('themeToggleBtn').innerText = isDark ? "☀️" : "🌙";
         }
 
-        // Navigation
+        // Tab Management
         function switchTab(tabName) {
             document.querySelectorAll('.app-tab').forEach(el => el.classList.remove('active'));
             document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('active'));
@@ -467,7 +492,7 @@
             if (tabName === 'plan') renderPlanner();
         }
 
-        // Agenda (Today)
+        // Chronological Agenda Rendering (Tab 1)
         function renderAgenda() {
             const pendingList = document.getElementById('pendingTasksList');
             const completedList = document.getElementById('completedTasksList');
@@ -475,8 +500,13 @@
             completedList.innerHTML = '';
 
             let todaysAgenda = [];
-            habits.forEach(h => todaysAgenda.push({ id: h.id, title: h.title, type: 'daily' }));
-            events.forEach(e => { if (e.date === TODAY_STR) todaysAgenda.push({ id: e.id, title: e.title, type: 'event' }); });
+            habits.forEach(h => todaysAgenda.push({ id: h.id, title: h.title, time: h.time || "00:00", type: 'daily' }));
+            events.forEach(e => { 
+                if (e.date === TODAY_STR) todaysAgenda.push({ id: e.id, title: e.title, time: e.time || "00:00", type: 'event' }); 
+            });
+
+            // CRITICAL STEP: Chronological Sort by Time String ("08:00" vs "14:00")
+            todaysAgenda.sort((a, b) => a.time.localeCompare(b.time));
 
             let pendingCount = 0;
             let doneCount = 0;
@@ -491,7 +521,10 @@
                         <div class="checkbox-circle">${isDone ? '✓' : ''}</div>
                         <div class="task-info">
                             <div class="task-title">${task.title}</div>
-                            <span class="task-tag ${tagClass}">${tagText}</span>
+                            <div class="task-meta-row">
+                                <span class="task-tag ${tagClass}">${tagText}</span>
+                                <span class="task-time-badge">⏰ ${formatTime(task.time)}</span>
+                            </div>
                         </div>
                     </div>
                 `;
@@ -515,6 +548,7 @@
                 completedList.innerHTML = `<div style="font-size: 0.85rem; color:var(--text-muted);">Nothing completed yet. Let's get to work!</div>`;
             }
 
+            // Interactive greetings engine
             const hour = new Date().getHours();
             let greeting = "Good Evening!";
             if (hour < 12) greeting = "Good Morning!";
@@ -542,7 +576,7 @@
             renderStats(); 
         }
 
-        // Stats
+        // Progress Calculations Engine (Tab 2)
         function renderStats() {
             let totalToday = habits.length;
             events.forEach(e => { if (e.date === TODAY_STR) totalToday++; });
@@ -575,12 +609,18 @@
             document.getElementById('streakDisplay').innerText = currentStreak;
         }
 
-        // Planner
+        // Sorted Planner Layout Configuration (Tab 3)
         function renderPlanner() {
             const habitsList = document.getElementById('editHabitsList');
+            // Sort daily list chronologically for easier planning view
+            habits.sort((a,b) => (a.time || "00:00").localeCompare(b.time || "00:00"));
+            
             habitsList.innerHTML = habits.map(h => `
                 <div class="edit-list-item">
-                    <span style="font-weight: 600;">${h.title}</span>
+                    <div>
+                        <span style="font-weight: 600;">${h.title}</span>
+                        <div style="font-size:0.75rem; color:var(--text-muted); font-weight:bold;">⏰ ${formatTime(h.time)}</div>
+                    </div>
                     <button class="delete-btn" onclick="deleteHabit('${h.id}')">Delete</button>
                 </div>
             `).join('');
@@ -588,13 +628,17 @@
             if (habits.length === 0) habitsList.innerHTML = "<p style='color:var(--text-muted); font-size:0.8rem;'>No daily must-dos set.</p>";
 
             const eventsList = document.getElementById('editEventsList');
-            const futureEvents = events.filter(e => e.date >= TODAY_STR).sort((a, b) => a.date.localeCompare(b.date));
+            // Sort events by Date first, then by Time chronologically
+            const futureEvents = events.filter(e => e.date >= TODAY_STR).sort((a, b) => {
+                if(a.date === b.date) return (a.time || "00:00").localeCompare(b.time || "00:00");
+                return a.date.localeCompare(b.date);
+            });
             
             eventsList.innerHTML = futureEvents.map(e => `
                 <div class="edit-list-item">
                     <div>
                         <div style="font-weight: 600; font-size:0.9rem;">${e.title}</div>
-                        <div style="font-size: 0.75rem; color: var(--primary); font-weight:bold;">📅 ${e.date}</div>
+                        <div style="font-size: 0.75rem; color: var(--primary); font-weight:bold;">📅 ${e.date} @ ${formatTime(e.time)}</div>
                     </div>
                     <button class="delete-btn" onclick="deleteEvent('${e.id}')">Cancel</button>
                 </div>
@@ -605,9 +649,16 @@
 
         function addHabit() {
             const input = document.getElementById('newHabitInput');
+            const timeInput = document.getElementById('newHabitTime');
             if (!input.value.trim()) return;
-            habits.push({ id: 'h_' + Date.now(), title: input.value.trim() });
+            
+            habits.push({ 
+                id: 'h_' + Date.now(), 
+                title: input.value.trim(),
+                time: timeInput.value || "12:00" // Defaults to noon if left blank
+            });
             input.value = '';
+            timeInput.value = '';
             saveData();
             renderPlanner();
             renderAgenda();
@@ -623,13 +674,20 @@
         function addEvent() {
             const titleInput = document.getElementById('newEventTitle');
             const dateInput = document.getElementById('newEventDate');
+            const timeInput = document.getElementById('newEventTime');
             if (!titleInput.value.trim() || !dateInput.value) {
-                alert("Please enter both a title and a date.");
+                alert("Please complete the title and date specifications.");
                 return;
             }
-            events.push({ id: 'e_' + Date.now(), title: titleInput.value.trim(), date: dateInput.value });
+            events.push({ 
+                id: 'e_' + Date.now(), 
+                title: titleInput.value.trim(), 
+                date: dateInput.value,
+                time: timeInput.value || "12:00"
+            });
             titleInput.value = '';
             dateInput.value = '';
+            timeInput.value = '';
             saveData();
             renderPlanner();
             renderAgenda();
@@ -652,8 +710,10 @@
             window.addEventListener('load', () => navigator.serviceWorker.register('./sw.js'));
         }
 
+        // Fire up initial states
         renderAgenda();
         renderStats();
+        initSecurityLifecycle();
     </script>
 </body>
 </html>
