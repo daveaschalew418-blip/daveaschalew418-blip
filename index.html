@@ -39,24 +39,19 @@
         * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; -webkit-tap-highlight-color: transparent; }
         body { background: var(--bg); color: var(--text); padding: 16px; display: flex; justify-content: center; min-height: 100vh; transition: background 0.3s, color 0.3s; }
         
-        /* App Container */
         .app-container { width: 100%; max-width: 480px; display: none; flex-direction: column; gap: 20px; padding-bottom: 80px; position: relative; }
         .app-container.unlocked { display: flex; }
         
-        /* Security Lock Screen */
         .lock-screen { position: fixed; inset: 0; background: var(--bg); z-index: 100000; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 24px; transition: opacity 0.3s; }
         .lock-logo { width: 80px; height: 80px; border-radius: 20px; margin-bottom: 24px; box-shadow: 0 10px 25px rgba(13, 148, 136, 0.3); }
         .lock-title { font-size: 1.5rem; font-weight: 800; margin-bottom: 8px; color: var(--text); }
         .lock-subtitle { font-size: 0.9rem; color: var(--text-muted); margin-bottom: 32px; text-align: center; max-width: 280px; }
         
-        /* Lock Views */
         #bioView, #pinView { display: none; flex-direction: column; align-items: center; width: 100%; }
         
-        /* Biometrics Layout */
         .bio-pulse-icon { font-size: 4.5rem; margin-bottom: 24px; cursor: pointer; animation: pulse 2s infinite; }
         .switch-lock-btn { background: var(--card); border: 1px solid var(--border); padding: 12px 24px; border-radius: 12px; font-weight: 700; font-size: 0.9rem; color: var(--text); cursor: pointer; display: flex; align-items: center; gap: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.02); }
         
-        /* Numpad Layout */
         .pin-dots { display: flex; gap: 16px; margin-bottom: 32px; }
         .pin-dot { width: 16px; height: 16px; border-radius: 50%; border: 2px solid var(--primary); transition: all 0.2s; }
         .pin-dot.filled { background: var(--primary); }
@@ -67,18 +62,9 @@
         .num-btn:active { transform: scale(0.95); background: var(--primary-light); }
         .action-num-btn { font-size: 1rem; color: var(--text-muted); background: transparent; border: none; box-shadow: none; }
         
-        @keyframes shake {
-            0%, 100% { transform: translateX(0); }
-            25% { transform: translateX(-5px); }
-            75% { transform: translateX(5px); }
-        }
-        @keyframes pulse {
-            0% { transform: scale(1); opacity: 1; }
-            50% { transform: scale(1.08); opacity: 0.8; }
-            100% { transform: scale(1); opacity: 1; }
-        }
+        @keyframes shake { 0%, 100% { transform: translateX(0); } 25% { transform: translateX(-5px); } 75% { transform: translateX(5px); } }
+        @keyframes pulse { 0% { transform: scale(1); opacity: 1; } 50% { transform: scale(1.08); opacity: 0.8; } 100% { transform: scale(1); opacity: 1; } }
 
-        /* Standard App Styles */
         .brand-header { display: flex; align-items: center; justify-content: space-between; padding-bottom: 8px; border-bottom: 1px solid var(--border); }
         .logo-group { display: flex; align-items: center; gap: 10px; }
         .logo-img { width: 34px; height: 34px; border-radius: 8px; }
@@ -106,7 +92,7 @@
         .task-info { flex: 1; }
         .task-title { font-size: 1rem; font-weight: 700; }
         
-        .task-meta-row { display: flex; align-items: center; gap: 8px; margin-top: 4px; }
+        .task-meta-row { display: flex; align-items: center; gap: 8px; margin-top: 4px; flex-wrap: wrap; }
         .task-tag { font-size: 0.7rem; font-weight: 700; padding: 2px 6px; border-radius: 6px; display: inline-block; }
         .tag-daily { background: var(--primary-light); color: var(--primary); }
         .tag-event { background: rgba(245, 158, 11, 0.15); color: #d97706; }
@@ -126,9 +112,14 @@
         
         .input-field { padding: 12px; border-radius: 10px; border: 1px solid var(--border); background: var(--bg); color: var(--text); font-size: 0.95rem; width: 100%; outline: none; }
         .input-field:focus { border-color: var(--primary); }
-        .btn { padding: 12px 20px; border-radius: 10px; border: none; font-weight: 700; cursor: pointer; text-align: center; white-space: nowrap; }
+        .btn { padding: 12px 20px; border-radius: 10px; border: none; font-weight: 700; cursor: pointer; text-align: center; white-space: nowrap; width: 100%; }
         .btn-primary { background: var(--primary); color: white; }
         
+        /* Interactive Day Picker Styles */
+        .day-picker { display: flex; justify-content: space-between; gap: 4px; margin-top: 4px; }
+        .day-btn { width: 36px; height: 36px; border-radius: 50%; border: 1px solid var(--border); background: var(--bg); color: var(--text-muted); font-size: 0.85rem; font-weight: 700; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: all 0.2s; }
+        .day-btn.active { background: var(--primary); color: white; border-color: var(--primary); }
+
         .edit-list-item { display: flex; justify-content: space-between; align-items: center; background: var(--card); border: 1px solid var(--border); padding: 12px; border-radius: 12px; margin-bottom: 8px; }
         .delete-btn { background: rgba(239, 68, 68, 0.1); color: var(--danger); border: none; padding: 6px 12px; border-radius: 8px; font-weight: bold; cursor: pointer; }
 
@@ -235,13 +226,24 @@
 
         <div id="tab-plan" class="app-tab">
             <div class="form-group">
-                <h3>📌 Daily Must-Dos</h3>
-                <p style="font-size: 0.8rem; color: var(--text-muted);">Things you need to do every single day.</p>
+                <h3>📌 Recurring Habits</h3>
+                <p style="font-size: 0.8rem; color: var(--text-muted);">Tasks that repeat on specific days.</p>
                 <div class="input-row">
-                    <input type="text" id="newHabitInput" class="input-field" placeholder="e.g. Drink Water, Workout...">
+                    <input type="text" id="newHabitInput" class="input-field" placeholder="e.g. Church, Gym...">
                     <input type="time" id="newHabitTime" class="input-field" style="max-width: 130px;">
-                    <button class="btn btn-primary" onclick="addHabit()">Add</button>
                 </div>
+                
+                <div class="day-picker" id="newHabitDays">
+                    <div class="day-btn active" data-day="0" onclick="toggleDayPicker(this)">S</div>
+                    <div class="day-btn active" data-day="1" onclick="toggleDayPicker(this)">M</div>
+                    <div class="day-btn active" data-day="2" onclick="toggleDayPicker(this)">T</div>
+                    <div class="day-btn active" data-day="3" onclick="toggleDayPicker(this)">W</div>
+                    <div class="day-btn active" data-day="4" onclick="toggleDayPicker(this)">T</div>
+                    <div class="day-btn active" data-day="5" onclick="toggleDayPicker(this)">F</div>
+                    <div class="day-btn active" data-day="6" onclick="toggleDayPicker(this)">S</div>
+                </div>
+                
+                <button class="btn btn-primary" style="margin-top: 4px;" onclick="addHabit()">Add Habit</button>
                 <div id="editHabitsList" style="margin-top: 12px;"></div>
             </div>
 
@@ -288,22 +290,18 @@
         const savedPin = localStorage.getItem('lifesync_pin');
         const hasBiometrics = localStorage.getItem('lifesync_bio_credential');
 
-        // Initializing security architecture flow
         function initSecurityLifecycle() {
             if (!savedPin) {
-                // Brand new user setup flow
                 isSettingPin = true;
                 document.getElementById('lockSubtitle').innerText = "Create a master 4-digit PIN to secure your schedule.";
                 showPinPad();
             } else {
                 if (hasBiometrics && window.PublicKeyCredential) {
-                    // Biometrics exist: Force fingerprint immediately
                     document.getElementById('lockSubtitle').innerText = "Verify your fingerprint or FaceID to open.";
                     document.getElementById('bioView').style.display = "flex";
                     document.getElementById('pinView').style.display = "none";
-                    setTimeout(triggerBiometrics, 350); // Auto-fire scanner natively
+                    setTimeout(triggerBiometrics, 350);
                 } else {
-                    // Default fallback if biometrics aren't setup yet
                     document.getElementById('lockSubtitle').innerText = "Enter your PIN to access your planner.";
                     showPinPad();
                 }
@@ -394,10 +392,7 @@
         }
 
         async function enrollBiometrics() {
-            if (!window.PublicKeyCredential) {
-                alert("Biometrics are not supported on this browser/device environment.");
-                return;
-            }
+            if (!window.PublicKeyCredential) { alert("Biometrics are not supported on this browser/device."); return; }
             try {
                 const publicKey = {
                     challenge: generateRandomBuffer(32),
@@ -431,18 +426,15 @@
                 const assertion = await navigator.credentials.get({ publicKey });
                 if (assertion) unlockApp();
             } catch (err) {
-                console.error("Biometric initialization failure:", err);
-                // Graceful fallback to keypad without alerting an ugly pop-up
+                console.error("Biometric failure:", err);
                 showPinPad();
             }
         }
 
-        // ================= LIFESYNC TIME-SORTED CORE ENGINE =================
+        // ================= LIFESYNC TIME & DAY CORE ENGINE =================
         let habits = JSON.parse(localStorage.getItem('lifesync_habits')) || [
-            { id: 'h1', title: 'Review Study Notes', time: '08:00' },
-            { id: 'h2', title: 'Gym Workout Session', time: '17:30' }
+            { id: 'h1', title: 'Review Study Notes', time: '08:00', days: [0,1,2,3,4,5,6] }
         ];
-        
         let events = JSON.parse(localStorage.getItem('lifesync_events')) || [];
         let history = JSON.parse(localStorage.getItem('lifesync_history')) || {};
 
@@ -452,9 +444,9 @@
         }
 
         const TODAY_STR = getTodayString();
+        const TODAY_DAY_OF_WEEK = new Date().getDay(); // 0 (Sun) to 6 (Sat)
         if (!history[TODAY_STR]) history[TODAY_STR] = [];
 
-        // Time presentation helper (e.g. 14:30 -> 2:30 PM)
         function formatTime(timeStr) {
             if (!timeStr) return "Anytime";
             const [hours, minutes] = timeStr.split(':');
@@ -464,8 +456,13 @@
             h = h ? h : 12;
             return `${h}:${minutes} ${ampm}`;
         }
+        
+        function getDaysBadgeString(daysArr) {
+            if (!daysArr || daysArr.length === 7) return "Everyday";
+            const names = ['Su', 'Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa'];
+            return daysArr.map(d => names[d]).join(', ');
+        }
 
-        // Theme Engine Setup
         if (localStorage.getItem('lifesync_theme') === 'dark') {
             document.body.classList.add('dark');
             document.getElementById('themeToggleBtn').innerText = "☀️";
@@ -478,7 +475,6 @@
             document.getElementById('themeToggleBtn').innerText = isDark ? "☀️" : "🌙";
         }
 
-        // Tab Management
         function switchTab(tabName) {
             document.querySelectorAll('.app-tab').forEach(el => el.classList.remove('active'));
             document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('active'));
@@ -492,7 +488,7 @@
             if (tabName === 'plan') renderPlanner();
         }
 
-        // Chronological Agenda Rendering (Tab 1)
+        // Agenda logic filtering for TODAY's Day of Week
         function renderAgenda() {
             const pendingList = document.getElementById('pendingTasksList');
             const completedList = document.getElementById('completedTasksList');
@@ -500,12 +496,18 @@
             completedList.innerHTML = '';
 
             let todaysAgenda = [];
-            habits.forEach(h => todaysAgenda.push({ id: h.id, title: h.title, time: h.time || "00:00", type: 'daily' }));
+            
+            habits.forEach(h => {
+                // If it's an old habit without 'days', or if today is in its 'days' array, add it.
+                if (!h.days || h.days.includes(TODAY_DAY_OF_WEEK)) {
+                    todaysAgenda.push({ id: h.id, title: h.title, time: h.time || "00:00", type: 'daily' });
+                }
+            });
+            
             events.forEach(e => { 
                 if (e.date === TODAY_STR) todaysAgenda.push({ id: e.id, title: e.title, time: e.time || "00:00", type: 'event' }); 
             });
 
-            // CRITICAL STEP: Chronological Sort by Time String ("08:00" vs "14:00")
             todaysAgenda.sort((a, b) => a.time.localeCompare(b.time));
 
             let pendingCount = 0;
@@ -514,7 +516,7 @@
             todaysAgenda.forEach(task => {
                 const isDone = history[TODAY_STR].includes(task.id);
                 const tagClass = task.type === 'daily' ? 'tag-daily' : 'tag-event';
-                const tagText = task.type === 'daily' ? 'DAILY' : 'ONE-TIME';
+                const tagText = task.type === 'daily' ? 'ROUTINE' : 'ONE-TIME';
 
                 const taskHtml = `
                     <div class="task-card ${isDone ? 'completed' : ''}" onclick="toggleTask('${task.id}')">
@@ -541,14 +543,13 @@
             if (pendingCount === 0 && todaysAgenda.length > 0) {
                 pendingList.innerHTML = `<div style="text-align:center; padding: 20px; color:var(--success); font-weight:bold;">🎉 All done for today! Great job!</div>`;
             } else if (todaysAgenda.length === 0) {
-                pendingList.innerHTML = `<div style="text-align:center; padding: 20px; color:var(--text-muted);">No tasks setup. Go to Plan to add some!</div>`;
+                pendingList.innerHTML = `<div style="text-align:center; padding: 20px; color:var(--text-muted);">Nothing scheduled for today. Relax!</div>`;
             }
 
             if (doneCount === 0) {
                 completedList.innerHTML = `<div style="font-size: 0.85rem; color:var(--text-muted);">Nothing completed yet. Let's get to work!</div>`;
             }
 
-            // Interactive greetings engine
             const hour = new Date().getHours();
             let greeting = "Good Evening!";
             if (hour < 12) greeting = "Good Morning!";
@@ -570,15 +571,12 @@
             const index = history[TODAY_STR].indexOf(id);
             if (index > -1) history[TODAY_STR].splice(index, 1);
             else history[TODAY_STR].push(id);
-            
-            saveData();
-            renderAgenda();
-            renderStats(); 
+            saveData(); renderAgenda(); renderStats(); 
         }
 
-        // Progress Calculations Engine (Tab 2)
         function renderStats() {
-            let totalToday = habits.length;
+            let totalToday = 0;
+            habits.forEach(h => { if (!h.days || h.days.includes(TODAY_DAY_OF_WEEK)) totalToday++; });
             events.forEach(e => { if (e.date === TODAY_STR) totalToday++; });
             
             let doneToday = history[TODAY_STR] ? history[TODAY_STR].length : 0;
@@ -609,26 +607,25 @@
             document.getElementById('streakDisplay').innerText = currentStreak;
         }
 
-        // Sorted Planner Layout Configuration (Tab 3)
         function renderPlanner() {
             const habitsList = document.getElementById('editHabitsList');
-            // Sort daily list chronologically for easier planning view
             habits.sort((a,b) => (a.time || "00:00").localeCompare(b.time || "00:00"));
             
             habitsList.innerHTML = habits.map(h => `
                 <div class="edit-list-item">
                     <div>
                         <span style="font-weight: 600;">${h.title}</span>
-                        <div style="font-size:0.75rem; color:var(--text-muted); font-weight:bold;">⏰ ${formatTime(h.time)}</div>
+                        <div style="font-size:0.75rem; color:var(--text-muted); font-weight:bold; margin-top:2px;">
+                            ⏰ ${formatTime(h.time)} • ${getDaysBadgeString(h.days)}
+                        </div>
                     </div>
                     <button class="delete-btn" onclick="deleteHabit('${h.id}')">Delete</button>
                 </div>
             `).join('');
 
-            if (habits.length === 0) habitsList.innerHTML = "<p style='color:var(--text-muted); font-size:0.8rem;'>No daily must-dos set.</p>";
+            if (habits.length === 0) habitsList.innerHTML = "<p style='color:var(--text-muted); font-size:0.8rem;'>No recurring habits set.</p>";
 
             const eventsList = document.getElementById('editEventsList');
-            // Sort events by Date first, then by Time chronologically
             const futureEvents = events.filter(e => e.date >= TODAY_STR).sort((a, b) => {
                 if(a.date === b.date) return (a.time || "00:00").localeCompare(b.time || "00:00");
                 return a.date.localeCompare(b.date);
@@ -647,18 +644,44 @@
             if (futureEvents.length === 0) eventsList.innerHTML = "<p style='color:var(--text-muted); font-size:0.8rem;'>No upcoming events scheduled.</p>";
         }
 
+        // --- Day Picker Setup Handlers ---
+        function toggleDayPicker(btn) {
+            btn.classList.toggle('active');
+        }
+        
+        function getSelectedDays() {
+            const days = [];
+            document.querySelectorAll('#newHabitDays .day-btn.active').forEach(btn => {
+                days.push(parseInt(btn.getAttribute('data-day')));
+            });
+            return days;
+        }
+
+        function resetDayPicker() {
+            document.querySelectorAll('#newHabitDays .day-btn').forEach(btn => btn.classList.add('active'));
+        }
+
         function addHabit() {
             const input = document.getElementById('newHabitInput');
             const timeInput = document.getElementById('newHabitTime');
+            const daysArr = getSelectedDays();
+            
             if (!input.value.trim()) return;
+            if (daysArr.length === 0) {
+                alert("Please select at least one day for this habit to occur.");
+                return;
+            }
             
             habits.push({ 
                 id: 'h_' + Date.now(), 
                 title: input.value.trim(),
-                time: timeInput.value || "12:00" // Defaults to noon if left blank
+                time: timeInput.value || "12:00",
+                days: daysArr
             });
+            
             input.value = '';
             timeInput.value = '';
+            resetDayPicker();
             saveData();
             renderPlanner();
             renderAgenda();
@@ -675,29 +698,15 @@
             const titleInput = document.getElementById('newEventTitle');
             const dateInput = document.getElementById('newEventDate');
             const timeInput = document.getElementById('newEventTime');
-            if (!titleInput.value.trim() || !dateInput.value) {
-                alert("Please complete the title and date specifications.");
-                return;
-            }
-            events.push({ 
-                id: 'e_' + Date.now(), 
-                title: titleInput.value.trim(), 
-                date: dateInput.value,
-                time: timeInput.value || "12:00"
-            });
-            titleInput.value = '';
-            dateInput.value = '';
-            timeInput.value = '';
-            saveData();
-            renderPlanner();
-            renderAgenda();
+            if (!titleInput.value.trim() || !dateInput.value) { alert("Please complete the title and date specifications."); return; }
+            events.push({ id: 'e_' + Date.now(), title: titleInput.value.trim(), date: dateInput.value, time: timeInput.value || "12:00" });
+            titleInput.value = ''; dateInput.value = ''; timeInput.value = '';
+            saveData(); renderPlanner(); renderAgenda();
         }
 
         function deleteEvent(id) {
             events = events.filter(e => e.id !== id);
-            saveData();
-            renderPlanner();
-            renderAgenda();
+            saveData(); renderPlanner(); renderAgenda();
         }
 
         function saveData() {
@@ -706,11 +715,8 @@
             localStorage.setItem('lifesync_history', JSON.stringify(history));
         }
 
-        if ('serviceWorker' in navigator) {
-            window.addEventListener('load', () => navigator.serviceWorker.register('./sw.js'));
-        }
+        if ('serviceWorker' in navigator) { window.addEventListener('load', () => navigator.serviceWorker.register('./sw.js')); }
 
-        // Fire up initial states
         renderAgenda();
         renderStats();
         initSecurityLifecycle();
